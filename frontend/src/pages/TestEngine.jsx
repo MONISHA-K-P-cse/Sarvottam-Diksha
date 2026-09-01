@@ -575,7 +575,7 @@ export default function TestEngine() {
 
     const enrolledStored = JSON.parse(localStorage.getItem('sd_enrolled_courses') || '[]');
     const isUserAdmin = user && user.role === 'ADMIN';
-    const isPaidCourse = associatedCourse ? Number(associatedCourse.price || 0) > 0 : false;
+    const isPaidCourse = associatedCourse ? (associatedCourse.isFree ? false : (Number(associatedCourse.price) === 0 && associatedCourse.price !== undefined ? false : true)) : false;
     const isPaidTest = loadedTest.accessMode === 'PAID' || Number(loadedTest.price || 0) > 0 || isPaidCourse || (loadedTest.accessMode === 'COURSE_ONLY' && isPaidCourse);
     
     const isEnrolled = (associatedCourse && (enrolledStored.includes(associatedCourse.id) || (cId && enrolledStored.includes(cId)))) || (loadedTest.id && enrolledStored.includes(loadedTest.id));
