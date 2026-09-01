@@ -1,0 +1,45 @@
+{
+  "success": true,
+  "courses": [
+    {
+      "id": "course_efgh",
+      "title": "EFGH",
+      "description": "Class 10 Mathematics Complete NCERT Coaching",
+      "category": "Class 10 Mathematics",
+      "price": 650,
+      "originalPrice": 1000,
+      "validityDays": 365,
+      "status": "PUBLISHED"
+    },
+    {
+      "id": "course_abcd",
+      "title": "abcd",
+      "description": "Class 10 Mathematics Coaching Batch",
+      "category": "Class 10 Mathematics",
+      "price": 1000,
+      "originalPrice": 1500,
+      "validityDays": 365,
+      "status": "PUBLISHED"
+    },
+    {
+      "id": "course_abhyaas",
+      "title": "Abhyaas",
+      "description": "Class 9 Mathematics Coaching Batch",
+      "category": "Class 9 Mathematics",
+      "price": 500,
+      "originalPrice": 999,
+      "validityDays": 365,
+      "status": "PUBLISHED"
+    },
+    {
+      "id": "course_abhyaas10",
+      "title": "Abhyaas class 10",
+      "description": "Class 10 Mathematics Batch",
+      "category": "Class 10 Mathematics",
+      "price": 500,
+      "originalPrice": 999,
+      "validityDays": 365,
+      "status": "PUBLISHED"
+    }
+  ]
+}

@@ -1,0 +1,325 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                   String         @id @default(uuid())
+  name                 String
+  email                String         @unique
+  phone                String
+  passwordHash         String
+  role                 String         @default("STUDENT") // STUDENT, ADMIN
+  avatarUrl            String?
+  firebaseUid          String?
+  resetToken           String?
+  resetTokenExpiry     DateTime?
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  purchases            Purchase[]
+  quizPurchases        QuizPurchase[]
+  testAttempts         TestAttempt[]
+  studentConversations Conversation[] @relation("StudentConversations")
+  adminConversations   Conversation[] @relation("AdminConversations")
+  sentMessages         Message[]      @relation("SentMessages")
+  receivedMessages     Message[]      @relation("ReceivedMessages")
+  notifications        Notification[]
+}
+
+model Conversation {
+  id                 String    @id @default(uuid())
+  studentId          String    @unique
+  student            User      @relation("StudentConversations", fields: [studentId], references: [id], onDelete: Cascade)
+  adminId            String?
+  admin              User?     @relation("AdminConversations", fields: [adminId], references: [id], onDelete: Cascade)
+  lastMessage        String?
+  lastMessageAt      DateTime  @default(now())
+  unreadCountAdmin   Int       @default(0)
+  unreadCountStudent Int       @default(0)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  messages           Message[]
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId     String
+  receiver       User         @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  senderRole     String       @default("STUDENT") // STUDENT, ADMIN
+  text           String
+  isRead         Boolean      @default(false)
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String?  // Null means global for Admin
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   @default("INFO") // PURCHASE, QUIZ, DOUBT, ANNOUNCEMENT
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model BrandingSettings {
+  id             String   @id @default("default")
+  appName        String   @default("Sarvottam Diksha")
+  tagline        String   @default("Delve in concepts with MANIKA")
+  logoUrl        String   @default("/logo.png")
+  primaryColor   String   @default("#0284C7")
+  secondaryColor String   @default("#EA580C")
+  contactEmail   String   @default("Dikshasarvottam@gmail.com")
+  contactPhone   String   @default("+91 99646 77802")
+  address        String   @default("Sarvottam Diksha Mathematics Center")
+  adminPasscode String   @default("Manika@Maths2026")
+  updatedAt      DateTime @updatedAt
+}
+
+model Course {
+  id            String     @id @default(uuid())
+  title         String
+  description   String
+  category      String     @default("Class 10 Mathematics") // Class 8, Class 9, Class 10, Class 11, Class 12 Mathematics
+  price         Float
+  originalPrice Float?
+  gstAmount     Float      @default(76)
+  handlingFee   Float      @default(14)
+  platformFee   Float      @default(10)
+  validityDays  Int        @default(365)
+  thumbnail     String?
+  isPublished   Boolean    @default(true)
+  status        String     @default("PUBLISHED") // DRAFT, PUBLISHED, UNPUBLISHED, ARCHIVED
+  isFree        Boolean    @default(false)
+  subject       String     @default("Mathematics")
+  likesCount    Int        @default(3)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  chapters      Chapter[]
+  tests         Test[]
+  purchases     Purchase[]
+  courseQuizzes CourseQuiz[]
+}
+
+model PublicPortal {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  thumbnail       String?
+  buttonText      String?  @default("Explore Now")
+  link            String?  @default("/store")
+  targetPlacement String   @default("BOTH") // HOME_PAGE, STUDENT_PORTAL, BOTH
+  displayOrder    Int      @default(0)
+  status          String   @default("PUBLISHED") // DRAFT, PUBLISHED, UNPUBLISHED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Chapter {
+  id         String    @id @default(uuid())
+  courseId   String
+  course     Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title      String
+  orderIndex Int       @default(0)
+  contents   Content[]
+  tests      Test[]
+}
+
+model Content {
+  id            String   @id @default(uuid())
+  chapterId     String
+  chapter       Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  title         String
+  type          String   // VIDEO, PDF, NOTES
+  url           String
+  duration      String?
+  isFreePreview Boolean  @default(false)
+  orderIndex    Int      @default(0)
+  createdAt     DateTime @default(now())
+}
+
+model Purchase {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId       String
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  amount         Float
+  paymentGateway String   @default("RAZORPAY")
+  paymentStatus  String   @default("SUCCESS")
+  orderId        String   @unique
+  paymentId      String?  @unique
+  signature      String?
+  createdAt      DateTime @default(now())
+}
+
+model Test {
+  id              String        @id @default(uuid())
+  courseId        String?
+  course          Course?       @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  chapterId       String?
+  chapter         Chapter?      @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  title           String
+  durationMinutes Int           @default(40)
+  totalMarks      Int           @default(100)
+  negativeMarks   Float         @default(0.25)
+  passPercentage  Float         @default(40.0)
+  accessMode      String        @default("FREE") // "FREE", "PAID", "COURSE_ONLY", "HYBRID"
+  price           Float         @default(0)
+  solutionDocUrl  String?
+  solutionDocName String?
+  isPublished     Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  questions       Question[]
+  testAttempts    TestAttempt[]
+  courseQuizzes   CourseQuiz[]
+  quizPurchases   QuizPurchase[]
+}
+
+model CourseQuiz {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  testId    String
+  test      Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([courseId, testId])
+}
+
+model QuizPurchase {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId         String
+  test           Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  amount         Float
+  paymentGateway String   @default("RAZORPAY")
+  paymentStatus  String   @default("SUCCESS")
+  orderId        String   @unique
+  paymentId      String?  @unique
+  signature      String?
+  createdAt      DateTime @default(now())
+}
+
+model Question {
+  id            String              @id @default(uuid())
+  testId        String
+  test          Test                @relation(fields: [testId], references: [id], onDelete: Cascade)
+  sectionName   String              @default("Section A")
+  questionType  String              @default("MCQ") // "MCQ", "TRUE_FALSE", "TYPING"
+  questionText  String
+  imageUrl      String?             // Diagram / Figure / Graph image URL or Base64 Data URL
+  optionA       String?
+  optionB       String?
+  optionC       String?
+  optionD       String?
+  correctOption String              // "A", "B", "C", "D" or exact typed answer target for TYPING
+  explanation   String?
+  marks         Float               @default(1.0)
+  negativeMarks Float               @default(0.0)
+  answers       TestAttemptAnswer[]
+}
+
+model TestAttempt {
+  id                 String              @id @default(uuid())
+  userId             String
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  testId             String
+  test               Test                @relation(fields: [testId], references: [id], onDelete: Cascade)
+  score              Float
+  maxScore           Float
+  correctCount       Int
+  wrongCount         Int
+  unansweredCount    Int
+  accuracyPercentage Float
+  timeTakenSeconds   Int
+  teacherComment     String?
+  isManualOverride   Boolean             @default(false)
+  submittedAt        DateTime            @default(now())
+  answers            TestAttemptAnswer[]
+}
+
+model TestAttemptAnswer {
+  id               String      @id @default(uuid())
+  attemptId        String
+  attempt          TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   String?
+  typedAnswer      String?
+  isCorrect        Boolean
+  scoreEarned      Float
+  timeSpentSeconds Int         @default(0)
+  isManualOverride Boolean     @default(false)
+}
+
+model FreeResource {
+  id          String   @id @default(uuid())
+  title       String
+  type        String
+  url         String
+  category    String   @default("Formula Sheet")
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model Coupon {
+  id                  String    @id @default(uuid())
+  code                String    @unique
+  title               String    @default("Special Offer")
+  discountType        String    @default("FLAT") // FLAT, PERCENTAGE
+  discountValue       Float     @default(200)
+  minOrderValue       Float     @default(0)
+  usedCount           Int       @default(0)
+  maxUses             Int?      @default(100)
+  courseSelectionType String?   @default("ALL") // ALL, SPECIFIC
+  assignedCourseIds   String?   // Comma separated course IDs
+  status              String    @default("ACTIVE") // ACTIVE, EXPIRED, DISABLED
+  expiresAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+}
+
+model ActiveTestSession {
+  id           String   @id @default(uuid())
+  userId       String
+  testId       String
+  startedAt    DateTime @default(now())
+  expiresAt    DateTime
+  savedAnswers String?  // JSON string of user answers { qId: option }
+  savedFlagged String?  // JSON string of flagged questions { qId: boolean }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, testId])
+}
+
+model LiveClass {
+  id         String   @id @default(uuid())
+  title      String
+  subject    String   @default("Mathematics")
+  classGrade String   @default("Class 10")
+  startTime  DateTime @default(now())
+  duration   String   @default("60 mins")
+  status     String   @default("UPCOMING") // UPCOMING, LIVE, COMPLETED
+  createdAt  DateTime @default(now())
+}
+

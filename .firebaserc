@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "sarvottam-diksha"
+  },
+  "targets": {
+    "sarvottam-diksha": {
+      "hosting": {
+        "api": [
+          "sarvottam-diksha"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}
