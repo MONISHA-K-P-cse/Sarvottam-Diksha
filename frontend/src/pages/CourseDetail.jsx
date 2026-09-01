@@ -140,7 +140,7 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
     if (loadedCourse) {
       try {
         const enrolledStored = JSON.parse(localStorage.getItem('sd_enrolled_courses') || '[]');
-        const isLocalEnrolled = enrolledStored.includes(targetId) || enrolledStored.includes(loadedCourse.id) || (user && user.role === 'ADMIN');
+        const isLocalEnrolled = enrolledStored.includes(targetId) || enrolledStored.includes(loadedCourse.id);
         let found = false;
         if (user) {
           const myRes = await axios.get('/api/courses/my-courses').catch(() => ({ data: { success: false } }));
@@ -526,7 +526,7 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
                         {attachedQuizzes.map(t => {
                           const isCoursePaid = Number(course?.price || 0) > 0;
                           const isFree = (t.accessMode === 'FREE' || Number(t.price || 0) === 0) && !isCoursePaid;
-                          const canAttempt = isPurchased || user?.role === 'ADMIN' || isFree;
+                          const canAttempt = isPurchased || isFree;
                           const qCount = Array.isArray(t.questions) ? t.questions.length : (t.questionCount || 15);
                           const duration = t.durationMinutes || t.duration || 30;
                           const marks = t.totalMarks || t.marks || (qCount * 4);
@@ -621,7 +621,7 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
                         {attachedQuizzes.map(t => {
                           const isCoursePaid = Number(course?.price || 0) > 0;
                           const isFree = (t.accessMode === 'FREE' || Number(t.price || 0) === 0) && !isCoursePaid;
-                          const canStart = isPurchased || user?.role === 'ADMIN' || isFree;
+                          const canStart = isPurchased || isFree;
                           const qCount = Array.isArray(t.questions) ? t.questions.length : (t.questionCount || 15);
                           const duration = t.durationMinutes || t.duration || 30;
                           const marks = t.totalMarks || t.marks || (qCount * 4);
