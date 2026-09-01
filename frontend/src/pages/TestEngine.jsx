@@ -575,8 +575,14 @@ export default function TestEngine() {
 
     const enrolledStored = JSON.parse(localStorage.getItem('sd_enrolled_courses') || '[]');
     const isUserAdmin = user && user.role === 'ADMIN';
+
+    // Explicit Free Test Check: Free tests must ALWAYS be attemptable by students without payment blocks
+    const isExplicitFree = loadedTest.accessMode === 'FREE' || loadedTest.isFreeTest === true || loadedTest.isFree === true || (Number(loadedTest.price) === 0 && loadedTest.price !== undefined && loadedTest.accessMode !== 'PAID');
+
     const isPaidCourse = associatedCourse ? (associatedCourse.isFree ? false : (Number(associatedCourse.price) === 0 && associatedCourse.price !== undefined ? false : true)) : false;
-    const isPaidTest = loadedTest.accessMode === 'PAID' || Number(loadedTest.price || 0) > 0 || isPaidCourse || (loadedTest.accessMode === 'COURSE_ONLY' && isPaidCourse);
+    
+    // Only lock if it is NOT an explicit free test AND requires course/standalone payment
+    const isPaidTest = !isExplicitFree && (loadedTest.accessMode === 'PAID' || Number(loadedTest.price || 0) > 0 || isPaidCourse || (loadedTest.accessMode === 'COURSE_ONLY' && isPaidCourse));
     
     const isEnrolled = (associatedCourse && (enrolledStored.includes(associatedCourse.id) || (cId && enrolledStored.includes(cId)))) || (loadedTest.id && enrolledStored.includes(loadedTest.id));
 

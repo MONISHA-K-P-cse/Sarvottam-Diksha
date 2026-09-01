@@ -45,15 +45,17 @@ export default function FreeResources() {
         console.warn('Backend API catalog request failed or timed out, loading custom published tests...', err);
       }
 
-      // Merge locally published custom tests from Admin Workspace (sd_custom_tests, sd_test_portal_tests)
+      // Merge locally published custom tests from Admin Workspace (sd_custom_tests, sd_test_portal_tests, sd_free_tests)
       try {
         const storedCustomTests = JSON.parse(localStorage.getItem('sd_custom_tests') || '[]');
         const testPortalTests = JSON.parse(localStorage.getItem('sd_test_portal_tests') || '[]');
-        const allAdminTests = [...storedCustomTests, ...testPortalTests];
+        const storedFreeTests = JSON.parse(localStorage.getItem('sd_free_tests') || '[]');
+        const allAdminTests = [...storedCustomTests, ...testPortalTests, ...storedFreeTests];
 
         const localFreeTests = allAdminTests.filter(t => 
           t.accessMode === 'FREE' || 
           t.isFreeTest === true || 
+          t.isFree === true ||
           (Number(t.price) === 0 && t.accessMode !== 'PAID' && t.accessMode !== 'COURSE_ONLY')
         ).map(t => ({
           ...t,
