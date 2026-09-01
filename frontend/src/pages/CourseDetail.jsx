@@ -524,9 +524,8 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {attachedQuizzes.map(t => {
-                          const isCoursePaid = totalAmountPayable > 0 || (course?.price !== 0 && course?.isFree !== true);
-                          const isFree = (t.accessMode === 'FREE' || Number(t.price || 0) === 0) && !isCoursePaid;
-                          const canAttempt = isPurchased || isFree;
+                          const isCourseFree = (course?.isFree === true || Number(course?.price) === 0) && totalAmountPayable === 0;
+                          const canAttempt = isPurchased || isCourseFree;
                           const qCount = Array.isArray(t.questions) ? t.questions.length : (t.questionCount || 15);
                           const duration = t.durationMinutes || t.duration || 30;
                           const marks = t.totalMarks || t.marks || (qCount * 4);
@@ -619,9 +618,8 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
 
                       <div className="space-y-3">
                         {attachedQuizzes.map(t => {
-                          const isCoursePaid = totalAmountPayable > 0 || (course?.price !== 0 && course?.isFree !== true);
-                          const isFree = (t.accessMode === 'FREE' || Number(t.price || 0) === 0) && !isCoursePaid;
-                          const canStart = isPurchased || isFree;
+                          const isCourseFree = (course?.isFree === true || Number(course?.price) === 0) && totalAmountPayable === 0;
+                          const canStart = isPurchased || isCourseFree;
                           const qCount = Array.isArray(t.questions) ? t.questions.length : (t.questionCount || 15);
                           const duration = t.durationMinutes || t.duration || 30;
                           const marks = t.totalMarks || t.marks || (qCount * 4);
