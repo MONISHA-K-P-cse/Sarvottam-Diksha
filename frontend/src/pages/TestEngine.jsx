@@ -387,9 +387,13 @@ export default function TestEngine() {
   const params = useParams();
   const testId = params.testId || params.quizId || params.id;
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [test, setTest] = useState(null);
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [isAccessDenied, setIsAccessDenied] = useState(false);
+  const [deniedReason, setDeniedReason] = useState('');
+  const [requiredCourseId, setRequiredCourseId] = useState(null);
 
   const sectionsMap = useMemo(() => {
     if (!test || !test.questions || test.questions.length === 0) return [];
@@ -417,7 +421,7 @@ export default function TestEngine() {
 
   useEffect(() => {
     fetchTestInfo();
-  }, [testId]);
+  }, [testId, user]);
 
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -463,7 +467,16 @@ export default function TestEngine() {
       if (res.data && res.data.success && res.data.test) {
         loadedTest = res.data.test;
       }
-    } catch (err) {}
+    } catch (err) {
+      if (err.response && (err.response.status === 403 || err.response.status === 401)) {
+        const errData = err.response.data || {};
+        setIsAccessDenied(true);
+        setDeniedReason(errData.error || '🔒 Access Denied: Course payment must be received by Admin before attempting this test.');
+        setRequiredCourseId(errData.test?.courseId || errData.courseId || null);
+        setLoading(false);
+        return;
+      }
+    }
 
     // 2. Comprehensive Local Storage & Admin Workspace Search
     try {
@@ -541,6 +554,38 @@ export default function TestEngine() {
           }
         }
       } catch (e) {}
+    }
+
+    // Client-side Strict Payment Enforcement Check
+    const cId = loadedTest.courseId || (Array.isArray(loadedTest.assignedCourseIds) ? loadedTest.assignedCourseIds[0] : null);
+    const cTitle = loadedTest.courseTitle || loadedTest.attachedCourseTitle || null;
+
+    const allCourses = [
+      ...JSON.parse(localStorage.getItem('sd_courses') || '[]'),
+      ...JSON.parse(localStorage.getItem('sd_custom_courses') || '[]')
+    ];
+
+    let associatedCourse = null;
+    if (cId) {
+      associatedCourse = allCourses.find(c => String(c.id).trim().toLowerCase() === String(cId).trim().toLowerCase());
+    }
+    if (!associatedCourse && cTitle) {
+      associatedCourse = allCourses.find(c => String(c.title).trim().toLowerCase() === String(cTitle).trim().toLowerCase());
+    }
+
+    const enrolledStored = JSON.parse(localStorage.getItem('sd_enrolled_courses') || '[]');
+    const isUserAdmin = user && user.role === 'ADMIN';
+    const isPaidCourse = associatedCourse ? Number(associatedCourse.price || 0) > 0 : false;
+    const isPaidTest = loadedTest.accessMode === 'PAID' || Number(loadedTest.price || 0) > 0 || isPaidCourse || (loadedTest.accessMode === 'COURSE_ONLY' && isPaidCourse);
+    
+    const isEnrolled = (associatedCourse && (enrolledStored.includes(associatedCourse.id) || (cId && enrolledStored.includes(cId)))) || (loadedTest.id && enrolledStored.includes(loadedTest.id));
+
+    if (isPaidTest && !isEnrolled && !isUserAdmin) {
+      setIsAccessDenied(true);
+      setDeniedReason(`🔒 Access Denied: Course payment must be received by Admin before attempting "${loadedTest.title}".`);
+      setRequiredCourseId(associatedCourse?.id || cId);
+      setLoading(false);
+      return;
     }
 
     // Ensure questions array is populated so student never sees a blank test
@@ -777,6 +822,42 @@ export default function TestEngine() {
   };
 
   if (loading) return <div className="text-center py-20 text-slate-800 dark:text-slate-200 text-sm font-extrabold">Loading test series...</div>;
+
+  if (isAccessDenied) {
+    return (
+      <div className="min-h-screen bg-[#0F172A] text-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="max-w-md w-full bg-slate-900 border-2 border-amber-500/40 p-8 rounded-3xl shadow-2xl space-y-6">
+          <div className="w-20 h-20 bg-amber-500/10 border-2 border-amber-500/30 text-amber-500 rounded-3xl flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-10 h-10 text-amber-500" />
+          </div>
+          <div className="space-y-3">
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">🔒 Quiz Access Locked</h2>
+            <p className="text-xs sm:text-sm font-extrabold text-slate-300 leading-relaxed">
+              {deniedReason || 'Only after payment is received and confirmed for the course batch can students attempt this practice quiz.'}
+            </p>
+          </div>
+
+          <div className="pt-2 space-y-3">
+            <button
+              onClick={() => navigate(requiredCourseId ? `/course/${requiredCourseId}` : '/courses')}
+              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-2xl font-black text-xs transition-all shadow-lg active:scale-95 cursor-pointer flex items-center justify-center gap-2"
+            >
+              <CreditCard className="w-4 h-4" />
+              <span>Go to Course & Complete Payment →</span>
+            </button>
+
+            <button
+              onClick={() => navigate(-1)}
+              className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-black text-xs transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Go Back</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!test || !test.questions || test.questions.length === 0) {
     return <div className="text-center py-20 text-slate-800 dark:text-slate-200 text-sm font-extrabold">No questions available in this test.</div>;
   }
