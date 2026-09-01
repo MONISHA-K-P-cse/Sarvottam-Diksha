@@ -138,6 +138,16 @@ export default function Home({ onOpenAuthModal }) {
   ];
 
   const [publicPortals, setPublicPortals] = useState([]);
+  const [banners, setBanners] = useState(() => {
+    try {
+      const storedCustom = JSON.parse(localStorage.getItem('sd_custom_banners') || '[]');
+      if (Array.isArray(storedCustom) && storedCustom.length > 0) return storedCustom;
+    } catch (e) {}
+    return [
+      { id: 'b1', title: 'CBSE Board 2025 Top Scorers', description: 'Congratulations to our Class 10 & 12 Board Exam Toppers!', thumbnail: results2025, link: '/courses', buttonText: 'Explore Courses' },
+      { id: 'b2', title: 'ABHYAAS Mathematics Test Series', description: 'Interactive chapterwise MCQs with instant step-by-step solutions.', thumbnail: posterBanner, link: '/free-resources', buttonText: 'Start Free Practice' }
+    ];
+  });
 
   useEffect(() => {
     fetchInitialData();
@@ -175,9 +185,21 @@ export default function Home({ onOpenAuthModal }) {
         if (coursesRes.data && coursesRes.data.success && Array.isArray(coursesRes.data.courses)) {
           loadedCourses = coursesRes.data.courses;
         }
-        if (portalsRes.data && portalsRes.data.success) {
-          setPublicPortals(portalsRes.data.portals || []);
+        
+        let remotePortals = [];
+        if (portalsRes && portalsRes.data && portalsRes.data.success) {
+          remotePortals = Array.isArray(portalsRes.data) ? portalsRes.data : (portalsRes.data.portals || []);
+          setPublicPortals(remotePortals);
         }
+        
+        try {
+          const storedCustomBanners = JSON.parse(localStorage.getItem('sd_custom_banners') || '[]');
+          const mergedBanners = [...storedCustomBanners, ...remotePortals];
+          if (mergedBanners.length > 0) {
+            const uniqueBanners = Array.from(new Map(mergedBanners.map(b => [b.id || b.title, b])).values());
+            setBanners(uniqueBanners);
+          }
+        } catch (e) {}
       } catch (err) {
         console.warn('Backend API home request failed or timed out, loading local references...', err);
       }
@@ -203,11 +225,12 @@ export default function Home({ onOpenAuthModal }) {
   };
 
   useEffect(() => {
+    if (banners.length === 0) return;
     const timer = setInterval(() => {
-      setActiveSlide((prev) => (prev + 1) % 3);
-    }, 5000);
+      setActiveSlide((prev) => (prev + 1) % banners.length);
+    }, 4500);
     return () => clearInterval(timer);
-  }, []);
+  }, [banners.length]);
 
   const sampleQuestion = {
     text: "If two positive integers a and b are written as a = x³y² and b = xy³, where x, y are prime numbers, then HCF(a, b) is:",
@@ -283,8 +306,84 @@ export default function Home({ onOpenAuthModal }) {
         </div>
       )}
 
-      {/* ================= 1. PERSONALIZED MATH-THEMED WELCOME BANNER ================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
+      {/* ================= 1. DYNAMIC PUBLISHED ACADEMY BANNERS HERO CAROUSEL (TOP OF STUDENT PORTAL) ================= */}
+      {banners.length > 0 && (
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-400/40 dark:border-slate-800 bg-slate-950 group">
+            {banners.map((b, idx) => {
+              const isActive = idx === (activeSlide % banners.length);
+              return (
+                <div
+                  key={b.id || idx}
+                  className={`transition-all duration-700 ease-in-out ${
+                    isActive ? 'block opacity-100 scale-100' : 'hidden opacity-0 scale-95'
+                  }`}
+                >
+                  <div className="relative min-h-[260px] sm:min-h-[320px] flex items-center p-6 sm:p-10 bg-gradient-to-r from-slate-950 via-purple-950/90 to-slate-900">
+                    {/* Background Banner Image */}
+                    <img
+                      src={b.thumbnail || b.src || posterBanner}
+                      alt={b.title || 'Academy Banner'}
+                      className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
+                      onError={(e) => { e.target.src = posterBanner; }}
+                    />
+                    
+                    <div className="relative z-10 max-w-3xl space-y-3.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-lg">
+                          <Sparkles className="w-4 h-4 text-slate-950" />
+                          <span>🌟 LATEST ACADEMY ANNOUNCEMENT</span>
+                        </span>
+                        <span className="bg-white/10 backdrop-blur-md text-amber-200 border border-white/20 px-3 py-1 rounded-full text-xs font-black">
+                          📢 Official Notice
+                        </span>
+                      </div>
+
+                      <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+                        {b.title}
+                      </h1>
+                      
+                      <p className="text-xs sm:text-base font-extrabold text-slate-200 line-clamp-2 max-w-2xl">
+                        {b.description}
+                      </p>
+
+                      <div className="pt-3 flex flex-wrap items-center gap-4">
+                        <Link
+                          to={b.link || '/store'}
+                          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-xs shadow-xl transition-all active:scale-95 border border-amber-300"
+                        >
+                          <span>{b.buttonText || 'Explore Now'}</span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Pagination Controls */}
+            {banners.length > 1 && (
+              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2 bg-slate-950/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                {banners.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveSlide(i)}
+                    className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                      i === (activeSlide % banners.length)
+                        ? 'bg-amber-400 w-7'
+                        : 'bg-white/40 hover:bg-white/70 w-2.5'
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* ================= 2. PERSONALIZED WELCOME USER CARD ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 border-2 border-purple-800 shadow-2xl relative overflow-hidden math-grid-pattern">
           
           {/* Decorative Floating Math Symbols Watermark */}
@@ -306,10 +405,10 @@ export default function Home({ onOpenAuthModal }) {
                   🔥 5 Days Math Streak
                 </span>
               </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
-                Welcome back, {user?.name || 'Monisha'} 👋
-              </h1>
-              <p className="text-sm sm:text-base font-bold text-slate-300">
+              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                Welcome back, {user?.name || 'Student'} 👋
+              </h2>
+              <p className="text-xs sm:text-sm font-bold text-slate-300">
                 Classes 6–12 Board & Higher Mathematics • Interactive Concept & MCQs Practice
               </p>
             </div>
