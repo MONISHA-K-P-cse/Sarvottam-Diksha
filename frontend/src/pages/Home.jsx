@@ -389,10 +389,12 @@ export default function Home({ onOpenAuthModal }) {
               </span>
             </div>
 
-            {/* High-Visibility Banner Container (Replacing Dark Purple background with High-Contrast Deep Slate Gold theme) */}
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-400/50 dark:border-amber-500/40 bg-slate-950 group">
+            {/* High-Visibility Banner Container (Matching User Screenshot 2: Clean Sky-Blue Split Card with Full Crisp Image Display on Right) */}
+            <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-sky-200 dark:border-slate-800 bg-[#E0F2FE] dark:bg-slate-900 group">
               {activeBanners.map((b, idx) => {
                 const isActive = idx === currentActiveIndex;
+                const imageSrc = b.thumbnail || b.src || posterBanner;
+
                 return (
                   <div
                     key={b.id || idx}
@@ -400,98 +402,99 @@ export default function Home({ onOpenAuthModal }) {
                       isActive ? 'block opacity-100 scale-100' : 'hidden opacity-0 scale-95'
                     }`}
                   >
-                    <div className="relative min-h-[250px] sm:min-h-[300px] flex items-center p-6 sm:p-10 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950">
-                      {/* Background Banner Image */}
-                      <img
-                        src={b.thumbnail || b.src || posterBanner}
-                        alt={b.title || 'Academy Banner'}
-                        className="absolute inset-0 w-full h-full object-cover opacity-35 mix-blend-overlay"
-                        onError={(e) => { e.target.src = posterBanner; }}
-                      />
+                    <div className="relative min-h-[260px] sm:min-h-[300px] flex flex-col md:flex-row items-center justify-between p-6 sm:p-10 gap-6 bg-gradient-to-r from-[#E0F2FE] via-[#F0F9FF] to-[#E0F2FE] dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
                       
-                      {/* High-Contrast Gradient Dark Backdrop Mask for 100% Crystal Clear Text Visibility */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent pointer-events-none" />
-
-                      <div className="relative z-10 max-w-3xl space-y-3.5">
+                      {/* Left Side: Badge, Title, Description & Action Button */}
+                      <div className="relative z-10 max-w-xl space-y-4 text-left w-full md:w-7/12">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
-                            <Sparkles className="w-3.5 h-3.5 text-slate-950" />
-                            <span>Featured Banner</span>
+                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-[#03458C] text-white text-xs font-black uppercase tracking-wider shadow-sm">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            <span>✦ FEATURED BANNER</span>
                           </span>
 
                           {b.isFeatured && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-black">
-                              <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400/20 text-amber-800 dark:text-amber-300 border border-amber-400/40 text-xs font-black">
+                              <Star className="w-3.5 h-3.5 fill-amber-500 text-amber-500" />
                               <span>Featured Highlight</span>
                             </span>
                           )}
 
                           {b.endDate && (
-                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-black">
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 text-[11px] font-black">
                               <Clock className="w-3.5 h-3.5" />
                               <span>Limited Period</span>
                             </span>
                           )}
                         </div>
 
-                        {/* Title - Crisp White Text with Dark Shadow Backdrop */}
-                        <h3 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+                        {/* Title - Bold Dark Text */}
+                        <h3 className="text-2xl sm:text-4xl font-black text-[#0C2340] dark:text-white tracking-tight leading-tight">
                           {b.title}
                         </h3>
                         
-                        {/* Description - High Contrast Bright Amber-tinted Text */}
-                        <p className="text-xs sm:text-base font-extrabold text-amber-100/90 leading-relaxed max-w-2xl line-clamp-2">
+                        {/* Description - Crisp Readable Dark Text */}
+                        <p className="text-xs sm:text-base font-extrabold text-[#2D4356] dark:text-slate-300 leading-relaxed line-clamp-3">
                           {b.description}
                         </p>
 
-                        {/* High-Visibility Action Button */}
-                        <div className="pt-2 flex flex-wrap items-center gap-3">
+                        {/* Action Button */}
+                        <div className="pt-2">
                           <Link
                             to={b.link || '/courses'}
-                            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-xs shadow-xl transition-all active:scale-95 border border-amber-300/80 cursor-pointer"
+                            className="inline-flex items-center gap-2 px-7 py-3 rounded-2xl bg-[#03458C] hover:bg-[#023166] text-white font-black text-xs shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
                           >
                             <span>{b.buttonText || 'Explore Now'}</span>
                             <ArrowRight className="w-4 h-4" />
                           </Link>
                         </div>
                       </div>
+
+                      {/* Right Side: FULL CRISP UPLOADED IMAGE DISPLAY (Zero dark overlay, 100% visible) */}
+                      <div className="w-full md:w-5/12 flex items-center justify-center p-2 relative z-10 shrink-0">
+                        <img
+                          src={imageSrc}
+                          alt={b.title || 'Banner Graphic'}
+                          className="max-h-56 sm:max-h-64 w-auto max-w-full object-contain rounded-2xl shadow-md border-2 border-white/60 dark:border-slate-700 bg-white"
+                          onError={(e) => { e.target.src = posterBanner; }}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
               })}
 
-              {/* Side Navigation Arrow Buttons (< and >) */}
+              {/* Side Navigation Circular White Arrow Buttons (< and >) */}
               {activeBanners.length > 1 && (
                 <>
                   <button
                     type="button"
                     onClick={() => setActiveSlide((prev) => (prev - 1 + activeBanners.length) % activeBanners.length)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/70 hover:bg-amber-500 text-white hover:text-slate-950 border border-white/20 flex items-center justify-center transition-all shadow-lg backdrop-blur-md cursor-pointer group-hover:scale-105"
+                    className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white hover:bg-slate-100 text-[#0C2340] border border-slate-200 flex items-center justify-center transition-all shadow-lg cursor-pointer group-hover:scale-105"
                   >
-                    <ChevronLeft className="w-6 h-6" />
+                    <ChevronLeft className="w-6 h-6 stroke-[3]" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setActiveSlide((prev) => (prev + 1) % activeBanners.length)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/70 hover:bg-amber-500 text-white hover:text-slate-950 border border-white/20 flex items-center justify-center transition-all shadow-lg backdrop-blur-md cursor-pointer group-hover:scale-105"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white hover:bg-slate-100 text-[#0C2340] border border-slate-200 flex items-center justify-center transition-all shadow-lg cursor-pointer group-hover:scale-105"
                   >
-                    <ChevronRight className="w-6 h-6" />
+                    <ChevronRight className="w-6 h-6 stroke-[3]" />
                   </button>
                 </>
               )}
 
-              {/* Pagination Dots Navigation Bar */}
+              {/* Centered Dots Pagination Bar at Bottom */}
               {activeBanners.length > 1 && (
-                <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-400/30 shadow-lg">
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 shadow-md">
                   {activeBanners.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveSlide(i)}
                       className={`h-2.5 rounded-full transition-all cursor-pointer ${
                         i === currentActiveIndex
-                          ? 'bg-amber-400 w-7'
-                          : 'bg-white/40 hover:bg-white/70 w-2.5'
+                          ? 'bg-[#03458C] dark:bg-sky-400 w-7'
+                          : 'bg-slate-300 dark:bg-slate-700 hover:bg-slate-400 w-2.5'
                       }`}
                     />
                   ))}
