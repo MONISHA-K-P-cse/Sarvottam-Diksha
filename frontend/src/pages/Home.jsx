@@ -306,10 +306,69 @@ export default function Home({ onOpenAuthModal }) {
         </div>
       )}
 
-      {/* ================= 1. DYNAMIC PUBLISHED ACADEMY BANNERS HERO CAROUSEL (TOP OF STUDENT PORTAL) ================= */}
+      {/* ================= 1. PERSONALIZED MATH-THEMED WELCOME BANNER ================= */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
+        <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 border-2 border-purple-800 shadow-2xl relative overflow-hidden math-grid-pattern">
+          
+          {/* Decorative Floating Math Symbols Watermark */}
+          <div className="absolute right-6 top-4 opacity-15 text-white pointer-events-none select-none font-serif text-6xl font-black space-x-6 hidden sm:block animate-float-math">
+            <span>∑</span>
+            <span>∫</span>
+            <span>π</span>
+            <span>√x</span>
+            <span>Δ</span>
+          </div>
+
+          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-amber-400 text-slate-950 border border-amber-300 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 font-mono shadow-md">
+                  <span>∑ STUDENT MATHEMATICS DASHBOARD</span>
+                </span>
+                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1">
+                  🔥 5 Days Math Streak
+                </span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight">
+                Welcome back, {user?.name || 'Monisha'} 👋
+              </h1>
+              <p className="text-sm sm:text-base font-bold text-slate-300">
+                Classes 6–12 Board & Higher Mathematics • Interactive Concept & MCQs Practice
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                to="/courses"
+                className="px-6 py-3.5 rounded-2xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-black text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-sky-400/30"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>My Enrolled Courses</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ================= 2. LATEST BANNERS & ACADEMY ANNOUNCEMENTS ================= */}
       {banners.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-2">
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-400/40 dark:border-slate-800 bg-slate-950 group">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
+                <Sparkles className="w-4 h-4 text-orange-500" />
+                <span>OFFICIAL ANNOUNCEMENTS</span>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                📢 Latest Banners & Academy Highlights
+              </h2>
+            </div>
+            <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 hidden sm:inline-block">
+              Auto-rotating featured banners
+            </span>
+          </div>
+
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-950 group">
             {banners.map((b, idx) => {
               const isActive = idx === (activeSlide % banners.length);
               return (
@@ -319,7 +378,7 @@ export default function Home({ onOpenAuthModal }) {
                     isActive ? 'block opacity-100 scale-100' : 'hidden opacity-0 scale-95'
                   }`}
                 >
-                  <div className="relative min-h-[260px] sm:min-h-[320px] flex items-center p-6 sm:p-10 bg-gradient-to-r from-slate-950 via-purple-950/90 to-slate-900">
+                  <div className="relative min-h-[240px] sm:min-h-[290px] flex items-center p-6 sm:p-10 bg-gradient-to-r from-slate-950 via-purple-950/90 to-slate-900">
                     {/* Background Banner Image */}
                     <img
                       src={b.thumbnail || b.src || posterBanner}
@@ -328,29 +387,26 @@ export default function Home({ onOpenAuthModal }) {
                       onError={(e) => { e.target.src = posterBanner; }}
                     />
                     
-                    <div className="relative z-10 max-w-3xl space-y-3.5">
+                    <div className="relative z-10 max-w-3xl space-y-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-lg">
-                          <Sparkles className="w-4 h-4 text-slate-950" />
-                          <span>🌟 LATEST ACADEMY ANNOUNCEMENT</span>
-                        </span>
-                        <span className="bg-white/10 backdrop-blur-md text-amber-200 border border-white/20 px-3 py-1 rounded-full text-xs font-black">
-                          📢 Official Notice
+                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Featured Banner</span>
                         </span>
                       </div>
 
-                      <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
+                      <h3 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
                         {b.title}
-                      </h1>
+                      </h3>
                       
                       <p className="text-xs sm:text-base font-extrabold text-slate-200 line-clamp-2 max-w-2xl">
                         {b.description}
                       </p>
 
-                      <div className="pt-3 flex flex-wrap items-center gap-4">
+                      <div className="pt-2">
                         <Link
                           to={b.link || '/store'}
-                          className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-xs shadow-xl transition-all active:scale-95 border border-amber-300"
+                          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-xs shadow-xl transition-all active:scale-95 border border-amber-300"
                         >
                           <span>{b.buttonText || 'Explore Now'}</span>
                           <ArrowRight className="w-4 h-4" />
@@ -381,50 +437,6 @@ export default function Home({ onOpenAuthModal }) {
           </div>
         </section>
       )}
-
-      {/* ================= 2. PERSONALIZED WELCOME USER CARD ================= */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-gradient-to-r from-purple-950 via-slate-900 to-indigo-950 text-white rounded-3xl p-6 sm:p-8 border-2 border-purple-800 shadow-2xl relative overflow-hidden math-grid-pattern">
-          
-          {/* Decorative Floating Math Symbols Watermark */}
-          <div className="absolute right-6 top-4 opacity-15 text-white pointer-events-none select-none font-serif text-6xl font-black space-x-6 hidden sm:block animate-float-math">
-            <span>∑</span>
-            <span>∫</span>
-            <span>π</span>
-            <span>√x</span>
-            <span>Δ</span>
-          </div>
-
-          <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="bg-amber-400 text-slate-950 border border-amber-300 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider flex items-center gap-1.5 font-mono shadow-md">
-                  <span>∑ STUDENT MATHEMATICS DASHBOARD</span>
-                </span>
-                <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-3 py-1 rounded-full text-xs font-black flex items-center gap-1">
-                  🔥 5 Days Math Streak
-                </span>
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-                Welcome back, {user?.name || 'Student'} 👋
-              </h2>
-              <p className="text-xs sm:text-sm font-bold text-slate-300">
-                Classes 6–12 Board & Higher Mathematics • Interactive Concept & MCQs Practice
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <Link
-                to="/courses"
-                className="px-6 py-3.5 rounded-2xl bg-[#0284C7] hover:bg-[#0369A1] text-white font-black text-xs shadow-lg transition-all active:scale-95 flex items-center gap-2 border border-sky-400/30"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>My Enrolled Courses</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* ================= 2. CONTINUE LEARNING & YOUR MATH PROGRESS GRID ================= */}
       {(() => {
