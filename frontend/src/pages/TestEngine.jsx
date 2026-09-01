@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import confetti from 'canvas-confetti';
 import MathRenderer from '../components/math/MathRenderer';
+import { useAuth } from '../context/AuthContext';
 import { 
   Clock, 
   Award, 
@@ -13,7 +14,8 @@ import {
   ChevronRight, 
   Flag, 
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Lock
 } from 'lucide-react';
 
 export const getOptionText = (q, optKey) => {

@@ -524,7 +524,8 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {attachedQuizzes.map(t => {
-                          const isFree = t.accessMode === 'FREE' || Number(t.price) === 0;
+                          const isCoursePaid = Number(course?.price || 0) > 0;
+                          const isFree = (t.accessMode === 'FREE' || Number(t.price || 0) === 0) && !isCoursePaid;
                           const canAttempt = isPurchased || user?.role === 'ADMIN' || isFree;
                           const qCount = Array.isArray(t.questions) ? t.questions.length : (t.questionCount || 15);
                           const duration = t.durationMinutes || t.duration || 30;
@@ -573,11 +574,11 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
                                   </button>
                                 ) : (
                                   <button
-                                    onClick={() => setMessage({ type: 'info', text: `🔒 Quiz "${t.title}" is included with this course! Click "Get this course" to unlock and attempt.` })}
-                                    className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-extrabold text-xs rounded-xl border border-slate-200 dark:border-slate-700 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                    onClick={() => handleOpenPayment()}
+                                    className="w-full py-2 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-300 font-extrabold text-xs rounded-xl border border-amber-200 dark:border-amber-800 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                                   >
-                                    <Lock className="w-3.5 h-3.5 text-amber-600" />
-                                    <span>Locked (Enroll to Attempt)</span>
+                                    <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                    <span>Locked (Buy Course to Attempt)</span>
                                   </button>
                                 )}
                               </div>
@@ -618,7 +619,8 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
 
                       <div className="space-y-3">
                         {attachedQuizzes.map(t => {
-                          const isFree = t.accessMode === 'FREE' || Number(t.price) === 0;
+                          const isCoursePaid = Number(course?.price || 0) > 0;
+                          const isFree = (t.accessMode === 'FREE' || Number(t.price || 0) === 0) && !isCoursePaid;
                           const canStart = isPurchased || user?.role === 'ADMIN' || isFree;
                           const qCount = Array.isArray(t.questions) ? t.questions.length : (t.questionCount || 15);
                           const duration = t.durationMinutes || t.duration || 30;
@@ -632,7 +634,9 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
                                   <span>📝 {qCount} Questions</span>
                                   <span>⏱ {duration} Mins</span>
                                   <span>🎯 {marks} Marks</span>
-                                  <span className="text-emerald-600 font-black">{isFree ? '🎁 Free Access' : (canStart ? '🎓 Unlocked' : '🔒 Included with Course')}</span>
+                                  <span className={canStart ? "text-emerald-600 font-black" : "text-amber-600 font-black flex items-center gap-1"}>
+                                    {canStart ? '🎓 Unlocked' : '🔒 Locked (Requires Course Payment)'}
+                                  </span>
                                 </div>
                               </div>
 
@@ -645,11 +649,11 @@ export default function CourseDetail({ onOpenAuthModal, isAdminPreview = false }
                                 </button>
                               ) : (
                                 <button
-                                  onClick={() => setMessage({ type: 'info', text: `🔒 Test "${t.title}" is included with this course! Click "Get this course" to unlock and attempt.` })}
-                                  className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-bold border border-slate-200 dark:border-slate-700 cursor-pointer"
+                                  onClick={() => handleOpenPayment()}
+                                  className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-300 text-xs font-bold border border-amber-200 dark:border-amber-800 cursor-pointer"
                                 >
-                                  <Lock className="w-3.5 h-3.5 text-amber-600" />
-                                  <span>Locked (Enroll to Attempt)</span>
+                                  <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                                  <span>Locked (Buy Course to Attempt)</span>
                                 </button>
                               )}
                             </div>
