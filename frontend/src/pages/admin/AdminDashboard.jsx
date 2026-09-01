@@ -502,10 +502,13 @@ export default function AdminDashboard() {
     title: '',
     description: '',
     thumbnail: '/assets/poster-flyer.png',
+    startDate: '',
+    endDate: '',
+    status: 'PUBLISHED',
     buttonText: 'Explore Now',
     link: '/store',
-    targetPlacement: 'BOTH', // 'HOME_PAGE', 'STUDENT_PORTAL', 'BOTH'
-    status: 'PUBLISHED'
+    isFeatured: true,
+    targetPlacement: 'BOTH' // 'HOME_PAGE', 'STUDENT_PORTAL', 'BOTH'
   });
 
   // Socket.io initialization
@@ -1296,10 +1299,14 @@ export default function AdminDashboard() {
       title: newBannerForm.title.trim(),
       description: newBannerForm.description.trim() || 'Sarvottam Diksha Official Academy Banner',
       thumbnail: newBannerForm.thumbnail || '/assets/poster-banner.png',
+      startDate: newBannerForm.startDate || null,
+      endDate: newBannerForm.endDate || null,
+      status: newBannerForm.status || 'PUBLISHED',
       buttonText: newBannerForm.buttonText || 'Explore Now',
       link: newBannerForm.link || '/store',
+      isFeatured: newBannerForm.isFeatured !== undefined ? newBannerForm.isFeatured : true,
       targetPlacement: newBannerForm.targetPlacement || 'BOTH',
-      status: 'PUBLISHED'
+      createdAt: new Date().toISOString()
     };
 
     // Optimistically update publicPortals state & localStorage immediately
@@ -1314,7 +1321,16 @@ export default function AdminDashboard() {
     setActiveTab('app');
     setAppSubTab('manage-banners');
     setNewBannerForm({
-      title: '', description: '', thumbnail: '/assets/poster-flyer.png', buttonText: 'Explore Now', link: '/store', targetPlacement: 'BOTH', status: 'PUBLISHED'
+      title: '',
+      description: '',
+      thumbnail: '/assets/poster-flyer.png',
+      startDate: '',
+      endDate: '',
+      status: 'PUBLISHED',
+      buttonText: 'Explore Now',
+      link: '/store',
+      isFeatured: true,
+      targetPlacement: 'BOTH'
     });
 
     try {
@@ -5432,145 +5448,178 @@ export default function AdminDashboard() {
 
       {/* ================= MODAL 5: UPLOAD NEW BANNER ================= */}
       {showCreateBannerModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-orange-200 dark:border-slate-800 shadow-2xl max-w-lg w-full p-6 space-y-4 text-slate-900 dark:text-white">
+        <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border-2 border-orange-200 dark:border-slate-800 shadow-2xl max-w-xl w-full p-6 space-y-4 text-slate-900 dark:text-white max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-orange-100 dark:border-slate-800 pb-3">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white">Upload New App / Website Banner</h3>
-              <button onClick={() => setShowCreateBannerModal(false)} className="p-1 text-slate-400 hover:text-slate-700">
+              <div>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white">Create & Schedule App Banner</h3>
+                <p className="text-[11px] font-semibold text-slate-500">Configure banner scheduling, status, CTA buttons & visibility</p>
+              </div>
+              <button onClick={() => setShowCreateBannerModal(false)} className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateBanner} className="space-y-4 text-xs font-bold">
+              {/* 1. Title */}
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1">Banner Title</label>
+                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">1. Banner Title *</label>
                 <input
                   type="text"
                   required
-                  placeholder="Sarvottam Diksha Board Exam Target 100/100"
+                  placeholder="e.g. CBSE Class 10 & 12 Board Revision Crash Course 2026"
                   value={newBannerForm.title}
                   onChange={(e) => setNewBannerForm({ ...newBannerForm, title: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF6500]"
                 />
               </div>
 
+              {/* 2. Description */}
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1">Description / Subtitle</label>
+                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">2. Subtitle / Description</label>
                 <input
                   type="text"
-                  placeholder="Join Manika Ma'am's specialized Mathematics batch"
+                  placeholder="e.g. Join Manika Ma'am for 30-day intensive Board exam problem solving"
                   value={newBannerForm.description}
                   onChange={(e) => setNewBannerForm({ ...newBannerForm, description: e.target.value })}
                   className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none"
                 />
               </div>
 
+              {/* 3. Banner Image / Background */}
               <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1">Target Location (Where should this banner be visible?)</label>
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  
-                  <button
-                    type="button"
-                    onClick={() => setNewBannerForm({ ...newBannerForm, targetPlacement: 'HOME_PAGE' })}
-                    className={`p-3 rounded-xl border text-center font-black transition-all cursor-pointer ${
-                      newBannerForm.targetPlacement === 'HOME_PAGE' 
-                        ? 'bg-purple-600 text-white border-purple-600 shadow-md' 
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    🏠 Home Page
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setNewBannerForm({ ...newBannerForm, targetPlacement: 'STUDENT_PORTAL' })}
-                    className={`p-3 rounded-xl border text-center font-black transition-all cursor-pointer ${
-                      newBannerForm.targetPlacement === 'STUDENT_PORTAL' 
-                        ? 'bg-sky-600 text-white border-sky-600 shadow-md' 
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    📱 Student Portal
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setNewBannerForm({ ...newBannerForm, targetPlacement: 'BOTH' })}
-                    className={`p-3 rounded-xl border text-center font-black transition-all cursor-pointer ${
-                      newBannerForm.targetPlacement === 'BOTH' 
-                        ? 'bg-gradient-to-r from-[#FF6500] to-amber-500 text-white border-orange-500 shadow-md' 
-                        : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300'
-                    }`}
-                  >
-                    🌟 Both Places
-                  </button>
-
+                <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">3. Banner Image / Background</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] text-slate-500 mb-1 block">Upload Image from Device</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setNewBannerForm(prev => ({ ...prev, thumbnail: reader.result }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-orange-300 dark:border-slate-700 rounded-xl p-2 text-[11px] text-slate-900 dark:text-white cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-500 mb-1 block">Or Select Preset Image</label>
+                    <select
+                      value={newBannerForm.thumbnail}
+                      onChange={(e) => setNewBannerForm({ ...newBannerForm, thumbnail: e.target.value })}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none"
+                    >
+                      <option value="/assets/poster-flyer.png">Maths Coaching Poster</option>
+                      <option value="/assets/poster-banner.png">ABHYAAS MCQ Banner</option>
+                      <option value="/assets/results-2025.jpg">Results 2025 Showcase</option>
+                      <option value="/assets/results-2024.png">Results 2024 Showcase</option>
+                      <option value="/assets/results-2023.png">Results 2023 Showcase</option>
+                    </select>
+                  </div>
                 </div>
+
+                {/* Banner Image Live Preview Box */}
+                {newBannerForm.thumbnail && (
+                  <div className="mt-2 rounded-2xl overflow-hidden border-2 border-orange-200 dark:border-slate-800 h-28 bg-slate-950 flex items-center justify-center relative shadow-inner">
+                    <img src={newBannerForm.thumbnail} alt="Banner Preview" className="w-full h-full object-cover" />
+                    <span className="absolute bottom-2 right-2 px-2.5 py-0.5 bg-black/80 text-amber-300 text-[10px] font-black rounded-full border border-amber-400/30">
+                      Live Image Preview
+                    </span>
+                  </div>
+                )}
               </div>
 
-              <div>
-                <label className="block text-slate-700 dark:text-slate-300 mb-1">Upload Custom Banner Image from Device</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        setNewBannerForm(prev => ({ ...prev, thumbnail: reader.result }));
-                      };
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-orange-300 dark:border-slate-700 rounded-xl p-2 text-xs text-slate-900 dark:text-white cursor-pointer"
-                />
-              </div>
-
-              {/* Banner Image Preview Box */}
-              {newBannerForm.thumbnail && (
-                <div className="rounded-xl overflow-hidden border border-orange-200 dark:border-slate-800 h-28 bg-slate-900 flex items-center justify-center relative">
-                  <img src={newBannerForm.thumbnail} alt="Banner Preview" className="w-full h-full object-cover" />
-                  <span className="absolute bottom-1 right-2 px-2 py-0.5 bg-black/60 text-white text-[9px] font-black rounded-md">Live Preview</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3">
+              {/* 4 & 5. Scheduling: Start Date/Time & End Date/Time */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-amber-500/5 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-amber-200 dark:border-slate-700">
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1">Or Choose Preset Image</label>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">4. Start Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={newBannerForm.startDate}
+                    onChange={(e) => setNewBannerForm({ ...newBannerForm, startDate: e.target.value })}
+                    className="w-full bg-white dark:bg-slate-900 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-1 block">Leave empty for immediate start</span>
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">5. End Date & Time (Auto-Expire)</label>
+                  <input
+                    type="datetime-local"
+                    value={newBannerForm.endDate}
+                    onChange={(e) => setNewBannerForm({ ...newBannerForm, endDate: e.target.value })}
+                    className="w-full bg-white dark:bg-slate-900 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                  <span className="text-[10px] text-slate-500 mt-1 block">Disappears automatically after this date</span>
+                </div>
+              </div>
+
+              {/* 6 & 9. Status & Featured Toggle */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">6. Publication Status</label>
                   <select
-                    value={newBannerForm.thumbnail}
-                    onChange={(e) => setNewBannerForm({ ...newBannerForm, thumbnail: e.target.value })}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none"
+                    value={newBannerForm.status}
+                    onChange={(e) => setNewBannerForm({ ...newBannerForm, status: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none font-black"
                   >
-                    <option value="/assets/poster-flyer.png">Maths Coaching Poster</option>
-                    <option value="/assets/poster-banner.png">ABHYAAS MCQ Banner</option>
-                    <option value="/assets/results-2025.jpg">Results 2025 Showcase</option>
-                    <option value="/assets/results-2024.png">Results 2024 Showcase</option>
-                    <option value="/assets/results-2023.png">Results 2023 Showcase</option>
+                    <option value="PUBLISHED">🟢 Published (Live for Students)</option>
+                    <option value="UNPUBLISHED">🔴 Unpublished (Draft / Hidden)</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 dark:text-slate-300 mb-1">On Tap Open Route</label>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">9. Featured Banner?</label>
+                  <select
+                    value={newBannerForm.isFeatured ? 'YES' : 'NO'}
+                    onChange={(e) => setNewBannerForm({ ...newBannerForm, isFeatured: e.target.value === 'YES' })}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none font-black"
+                  >
+                    <option value="YES">⭐ Yes (Featured Highlight Badge)</option>
+                    <option value="NO">Standard Announcement</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* 7 & 8. Button Text & Action Link */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">7. Button Text</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Explore Course / Start Practice"
+                    value={newBannerForm.buttonText}
+                    onChange={(e) => setNewBannerForm({ ...newBannerForm, buttonText: e.target.value })}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-700 dark:text-slate-300 mb-1 font-black">8. Button Destination Link</label>
                   <select
                     value={newBannerForm.link}
                     onChange={(e) => setNewBannerForm({ ...newBannerForm, link: e.target.value })}
                     className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-orange-200 dark:border-slate-700 rounded-xl p-3 text-slate-900 dark:text-white focus:outline-none"
                   >
-                    <option value="/store">Course Store (/store)</option>
-                    <option value="/free-test">Free Practice Test (/free-test)</option>
+                    <option value="/courses">Course Store (/courses)</option>
+                    <option value="/free-resources">Free Tests & Resources (/free-resources)</option>
                     <option value="/leaderboard">Leaderboard (/leaderboard)</option>
-                    <option value="/my-courses">My Courses (/my-courses)</option>
+                    <option value="/store">Official Store (/store)</option>
                   </select>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 bg-gradient-to-r from-[#FF6500] to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                className="w-full py-3.5 bg-gradient-to-r from-[#FF6500] via-amber-500 to-orange-600 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs rounded-2xl shadow-xl transition-all cursor-pointer border border-amber-300/40 active:scale-95"
               >
-                Publish New Banner Live
+                🚀 Save & Publish Live Banner
               </button>
             </form>
           </div>

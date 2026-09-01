@@ -33,7 +33,9 @@ import {
   Instagram,
   Calendar,
   FileCheck,
-  ThumbsUp
+  ThumbsUp,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function Home({ onOpenAuthModal }) {
@@ -351,92 +353,154 @@ export default function Home({ onOpenAuthModal }) {
       </section>
 
       {/* ================= 2. LATEST BANNERS & ACADEMY ANNOUNCEMENTS ================= */}
-      {banners.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
-                <Sparkles className="w-4 h-4 text-orange-500" />
-                <span>OFFICIAL ANNOUNCEMENTS</span>
+      {(() => {
+        const activeBanners = banners.filter(b => {
+          if (b.status && b.status !== 'PUBLISHED') return false;
+          const now = new Date();
+          if (b.startDate) {
+            const start = new Date(b.startDate);
+            if (!isNaN(start.getTime()) && now < start) return false;
+          }
+          if (b.endDate) {
+            const end = new Date(b.endDate);
+            if (!isNaN(end.getTime()) && now > end) return false;
+          }
+          return true;
+        });
+
+        if (activeBanners.length === 0) return null;
+
+        const currentActiveIndex = activeSlide % activeBanners.length;
+
+        return (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 pt-2">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
+                  <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
+                  <span>OFFICIAL ANNOUNCEMENTS</span>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
+                  📢 Latest Banners & Academy Highlights
+                </h2>
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
-                📢 Latest Banners & Academy Highlights
-              </h2>
+              <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 hidden sm:inline-block">
+                Auto-rotating active banners ({activeBanners.length})
+              </span>
             </div>
-            <span className="text-xs font-extrabold text-slate-500 dark:text-slate-400 hidden sm:inline-block">
-              Auto-rotating featured banners
-            </span>
-          </div>
 
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-slate-200 dark:border-slate-800 bg-slate-950 group">
-            {banners.map((b, idx) => {
-              const isActive = idx === (activeSlide % banners.length);
-              return (
-                <div
-                  key={b.id || idx}
-                  className={`transition-all duration-700 ease-in-out ${
-                    isActive ? 'block opacity-100 scale-100' : 'hidden opacity-0 scale-95'
-                  }`}
-                >
-                  <div className="relative min-h-[240px] sm:min-h-[290px] flex items-center p-6 sm:p-10 bg-gradient-to-r from-slate-950 via-purple-950/90 to-slate-900">
-                    {/* Background Banner Image */}
-                    <img
-                      src={b.thumbnail || b.src || posterBanner}
-                      alt={b.title || 'Academy Banner'}
-                      className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
-                      onError={(e) => { e.target.src = posterBanner; }}
-                    />
-                    
-                    <div className="relative z-10 max-w-3xl space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-amber-400 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
-                          <Sparkles className="w-3.5 h-3.5" />
-                          <span>Featured Banner</span>
-                        </span>
-                      </div>
-
-                      <h3 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                        {b.title}
-                      </h3>
+            {/* High-Visibility Banner Container (Replacing Dark Purple background with High-Contrast Deep Slate Gold theme) */}
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl border-2 border-amber-400/50 dark:border-amber-500/40 bg-slate-950 group">
+              {activeBanners.map((b, idx) => {
+                const isActive = idx === currentActiveIndex;
+                return (
+                  <div
+                    key={b.id || idx}
+                    className={`transition-all duration-700 ease-in-out ${
+                      isActive ? 'block opacity-100 scale-100' : 'hidden opacity-0 scale-95'
+                    }`}
+                  >
+                    <div className="relative min-h-[250px] sm:min-h-[300px] flex items-center p-6 sm:p-10 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950">
+                      {/* Background Banner Image */}
+                      <img
+                        src={b.thumbnail || b.src || posterBanner}
+                        alt={b.title || 'Academy Banner'}
+                        className="absolute inset-0 w-full h-full object-cover opacity-35 mix-blend-overlay"
+                        onError={(e) => { e.target.src = posterBanner; }}
+                      />
                       
-                      <p className="text-xs sm:text-base font-extrabold text-slate-200 line-clamp-2 max-w-2xl">
-                        {b.description}
-                      </p>
+                      {/* High-Contrast Gradient Dark Backdrop Mask for 100% Crystal Clear Text Visibility */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/85 to-transparent pointer-events-none" />
 
-                      <div className="pt-2">
-                        <Link
-                          to={b.link || '/store'}
-                          className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-600 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-xs shadow-xl transition-all active:scale-95 border border-amber-300"
-                        >
-                          <span>{b.buttonText || 'Explore Now'}</span>
-                          <ArrowRight className="w-4 h-4" />
-                        </Link>
+                      <div className="relative z-10 max-w-3xl space-y-3.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
+                            <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                            <span>Featured Banner</span>
+                          </span>
+
+                          {b.isFeatured && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40 text-xs font-black">
+                              <Star className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+                              <span>Featured Highlight</span>
+                            </span>
+                          )}
+
+                          {b.endDate && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-black">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Limited Period</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Title - Crisp White Text with Dark Shadow Backdrop */}
+                        <h3 className="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight drop-shadow-md">
+                          {b.title}
+                        </h3>
+                        
+                        {/* Description - High Contrast Bright Amber-tinted Text */}
+                        <p className="text-xs sm:text-base font-extrabold text-amber-100/90 leading-relaxed max-w-2xl line-clamp-2">
+                          {b.description}
+                        </p>
+
+                        {/* High-Visibility Action Button */}
+                        <div className="pt-2 flex flex-wrap items-center gap-3">
+                          <Link
+                            to={b.link || '/courses'}
+                            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 hover:from-amber-500 hover:to-orange-600 text-slate-950 font-black text-xs shadow-xl transition-all active:scale-95 border border-amber-300/80 cursor-pointer"
+                          >
+                            <span>{b.buttonText || 'Explore Now'}</span>
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
 
-            {/* Pagination Controls */}
-            {banners.length > 1 && (
-              <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2 bg-slate-950/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
-                {banners.map((_, i) => (
+              {/* Side Navigation Arrow Buttons (< and >) */}
+              {activeBanners.length > 1 && (
+                <>
                   <button
-                    key={i}
-                    onClick={() => setActiveSlide(i)}
-                    className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                      i === (activeSlide % banners.length)
-                        ? 'bg-amber-400 w-7'
-                        : 'bg-white/40 hover:bg-white/70 w-2.5'
-                    }`}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      )}
+                    type="button"
+                    onClick={() => setActiveSlide((prev) => (prev - 1 + activeBanners.length) % activeBanners.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/70 hover:bg-amber-500 text-white hover:text-slate-950 border border-white/20 flex items-center justify-center transition-all shadow-lg backdrop-blur-md cursor-pointer group-hover:scale-105"
+                  >
+                    <ChevronLeft className="w-6 h-6" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveSlide((prev) => (prev + 1) % activeBanners.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-slate-950/70 hover:bg-amber-500 text-white hover:text-slate-950 border border-white/20 flex items-center justify-center transition-all shadow-lg backdrop-blur-md cursor-pointer group-hover:scale-105"
+                  >
+                    <ChevronRight className="w-6 h-6" />
+                  </button>
+                </>
+              )}
+
+              {/* Pagination Dots Navigation Bar */}
+              {activeBanners.length > 1 && (
+                <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2 bg-slate-950/80 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-amber-400/30 shadow-lg">
+                  {activeBanners.map((_, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setActiveSlide(i)}
+                      className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                        i === currentActiveIndex
+                          ? 'bg-amber-400 w-7'
+                          : 'bg-white/40 hover:bg-white/70 w-2.5'
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ================= 2. CONTINUE LEARNING & YOUR MATH PROGRESS GRID ================= */}
       {(() => {
