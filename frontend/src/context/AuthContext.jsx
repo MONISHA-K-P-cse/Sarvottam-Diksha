@@ -397,7 +397,17 @@ const login = async (email, password) => {
       await sendPasswordResetEmail(auth, cleanEmail);
       emailSent = true;
     } catch (fbErr) {
-      console.warn('Firebase reset email notice:', fbErr.message);
+      console.warn('Firebase reset email notice:', fbErr.code, fbErr.message);
+      if (fbErr.code === 'auth/user-not-found') {
+        try {
+          const tempPass = 'TempPass_' + Math.random().toString(36).slice(2) + '!' + Date.now();
+          await createUserWithEmailAndPassword(auth, cleanEmail, tempPass);
+          await sendPasswordResetEmail(auth, cleanEmail);
+          emailSent = true;
+        } catch (createErr) {
+          console.warn('Firebase user auto-provision notice:', createErr.message);
+        }
+      }
     }
 
     // 2. Also dispatch via backend NodeMailer SMTP if running

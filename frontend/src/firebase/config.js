@@ -11,12 +11,12 @@ import {
 
 // Firebase configuration from environment variables with fallback defaults
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDemoApiKeyForSarvottamDiksha2026",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyCxxW3WR_SkXX2ekkf3mkK7jdDSKV2Dvss",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "sarvottam-diksha.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "sarvottam-diksha",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "sarvottam-diksha.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "123456789012",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789012:web:demo123456789"
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "sarvottam-diksha.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "188798834097",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:188798834097:web:1472455ded3c7b8ca89990"
 };
 
 // Initialize Firebase App
