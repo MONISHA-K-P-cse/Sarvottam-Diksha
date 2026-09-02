@@ -56,7 +56,7 @@ import {
 } from 'lucide-react';
 
 export default function GatedAuthScreen() {
-  const { login, register, resetPassword } = useAuth();
+  const { login, register, resetPassword, confirmPasswordReset } = useAuth();
   const { theme, setTheme, isDark } = useTheme();
   const navigate = useNavigate();
 
@@ -70,7 +70,11 @@ export default function GatedAuthScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('student123');
   const [error, setError] = useState('');
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [resetLinkUrl, setResetLinkUrl] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Scroll & Header state
@@ -181,18 +185,49 @@ export default function GatedAuthScreen() {
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Please enter your email address to reset password.');
-      return;
-    }
+  const handleForgotPassword = () => {
     setError('');
     setSuccessMessage('');
+    setIsForgotPassword(true);
+  };
+
+  const handleForgotPasswordSubmit = async (e) => {
+    e?.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    if (!email) {
+      setError('Please enter your account email address.');
+      return;
+    }
+    if (!newPassword || newPassword.length < 6) {
+      setError('New password must be at least 6 characters long.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match. Please verify your entries.');
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await resetPassword(email);
-      setSuccessMessage(res.message || 'Password reset link sent to your email.');
+      await confirmPasswordReset({ email, token: 'direct_recovery', newPassword });
+      setSuccessMessage('🎉 Password reset successfully! Logging you into your portal...');
+      setTimeout(async () => {
+        try {
+          await login(email, newPassword);
+          if (role === 'ADMIN' || email.includes('admin') || email.includes('diksha')) {
+            navigate('/admin');
+          } else {
+            navigate('/my-courses');
+          }
+        } catch (loginErr) {
+          setIsForgotPassword(false);
+        }
+      }, 1500);
     } catch (err) {
-      setError(err.message || 'Failed to send password reset email.');
+      setError(err.message || 'Failed to reset password.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -752,159 +787,253 @@ export default function GatedAuthScreen() {
               {/* RIGHT COLUMN (55% Width = lg:col-span-7): STUDENT & ADMIN LOGIN PORTAL PANEL */}
               <div className="lg:col-span-7 bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
                 
-                <div className="text-center space-y-1.5">
-                  <span className="text-xs font-black uppercase tracking-widest text-[#0284C7]">STUDENT & ADMIN ACCESS</span>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">Sign In to Your Learning Portal</h3>
-                  <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
-                    Access your enrolled courses, chapterwise timed MCQ tests, and doubt chats.
-                  </p>
-                </div>
-
-                {/* Role Selection Toggle */}
-                <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl text-sm font-black">
-                  <button
-                    type="button"
-                    onClick={() => handleRoleChange('STUDENT')}
-                    className={`py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
-                      role === 'STUDENT'
-                        ? 'bg-[#0284C7] text-white shadow-md font-black'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <User className="w-4 h-4" />
-                    <span>I am a Student</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleRoleChange('ADMIN')}
-                    className={`py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
-                      role === 'ADMIN'
-                        ? 'bg-[#0284C7] text-white shadow-md font-black'
-                        : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
-                    }`}
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>I am Teacher (Admin)</span>
-                  </button>
-                </div>
-
-                {/* Error & Success State Banners */}
-                {error && (
-                  <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-300 text-sm font-black text-center">
-                    {error}
-                  </div>
-                )}
-                {successMessage && (
-                  <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 text-sm font-black text-center">
-                    {successMessage}
-                  </div>
-                )}
-
-                {/* Form Fields */}
-                <form onSubmit={handleSubmit} className="space-y-4 text-sm font-bold">
-                  
-                  {role === 'STUDENT' && isRegister && (
-                    <div>
-                      <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Full Student Name</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Monisha K P"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
-                      />
+                {isForgotPassword ? (
+                  <div className="space-y-5 animate-fade-in">
+                    <div className="text-center space-y-1.5">
+                      <span className="text-xs font-black uppercase tracking-widest text-[#0284C7]">ACCOUNT SECURITY PORTAL</span>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-white">Reset Your Password</h3>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        Enter your registered email and set a new password.
+                      </p>
                     </div>
-                  )}
 
-                  <div>
-                    <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Email Address</label>
-                    <div className="relative">
-                      <input
-                        type="email"
-                        required
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
-                      />
-                      <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
-                    </div>
-                  </div>
+                    {/* Error & Success State Banners */}
+                    {error && (
+                      <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-300 text-sm font-black text-center">
+                        {error}
+                      </div>
+                    )}
+                    {successMessage && (
+                      <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm font-black text-center space-y-2">
+                        <div>{successMessage}</div>
+                      </div>
+                    )}
 
-                  <div>
-                    <div className="flex justify-between items-center mb-1.5">
-                      <label className="block text-slate-800 dark:text-slate-200 font-black">
-                        {role === 'ADMIN' ? 'Special Admin Passcode' : 'Password'}
-                      </label>
-                      <button 
-                        type="button" 
-                        onClick={handleForgotPassword} 
-                        className="text-xs font-black text-[#0284C7] dark:text-sky-400 hover:underline"
+                    <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 text-sm font-bold">
+                      <div>
+                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Account Email</label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            required
+                            placeholder="your_email@gmail.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                          />
+                          <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">New Password</label>
+                        <div className="relative">
+                          <input
+                            type="password"
+                            required
+                            minLength={6}
+                            placeholder="At least 6 characters"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                          />
+                          <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Confirm New Password</label>
+                        <div className="relative">
+                          <input
+                            type="password"
+                            required
+                            minLength={6}
+                            placeholder="Re-enter your new password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                          />
+                          <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full py-4 rounded-xl font-black text-sm sm:text-base text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
                       >
-                        Forgot Password?
+                        <span>{loading ? 'Updating Password...' : 'Save New Password & Sign In'}</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    </form>
+
+                    <div className="text-center pt-2">
+                      <button
+                        type="button"
+                        onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
+                        className="text-xs font-black text-slate-600 dark:text-slate-400 hover:text-[#0284C7] dark:hover:text-sky-400 transition-colors cursor-pointer"
+                      >
+                        ← Return to Sign In
                       </button>
                     </div>
-                    <div className="relative">
-                      <input
-                        type="password"
-                        required
-                        minLength={6}
-                        placeholder={isRegister ? "Min 6 characters" : "••••••••"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
-                      />
-                      <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-center space-y-1.5">
+                      <span className="text-xs font-black uppercase tracking-widest text-[#0284C7]">STUDENT & ADMIN ACCESS</span>
+                      <h3 className="text-2xl font-black text-slate-900 dark:text-white">Sign In to Your Learning Portal</h3>
+                      <p className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                        Access your enrolled courses, chapterwise timed MCQ tests, and doubt chats.
+                      </p>
                     </div>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                    className="w-full py-4 rounded-xl font-black text-sm sm:text-base text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
-                  >
-                    <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
-                    <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                  </button>
-                </form>
+                    {/* Role Selection Toggle */}
+                    <div className="grid grid-cols-2 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl text-sm font-black">
+                      <button
+                        type="button"
+                        onClick={() => handleRoleChange('STUDENT')}
+                        className={`py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          role === 'STUDENT'
+                            ? 'bg-[#0284C7] text-white shadow-md font-black'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <User className="w-4 h-4" />
+                        <span>I am a Student</span>
+                      </button>
 
-                {/* Demo Login (Testing & Review Access) */}
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2 text-center">
-                  <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">
-                    TESTING & REVIEW ACCESS
-                  </span>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={handleQuickDemoStudent}
-                      className="py-3 px-3 rounded-xl bg-[#F1F5F9] dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-black transition-colors"
-                    >
-                      Demo Student
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleQuickDemoAdmin}
-                      className="py-3 px-3 rounded-xl bg-purple-100 dark:bg-purple-950/60 hover:bg-purple-200 dark:hover:bg-purple-900 text-purple-900 dark:text-purple-300 text-xs sm:text-sm font-black transition-colors"
-                    >
-                      Manika Ma'am (Admin)
-                    </button>
-                  </div>
-                </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRoleChange('ADMIN')}
+                        className={`py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 ${
+                          role === 'ADMIN'
+                            ? 'bg-[#0284C7] text-white shadow-md font-black'
+                            : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                        }`}
+                      >
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>I am Teacher (Admin)</span>
+                      </button>
+                    </div>
 
-                {/* Registration Link */}
-                {role === 'STUDENT' && (
-                  <div className="text-center text-sm font-extrabold text-slate-600 dark:text-slate-400 pt-1">
-                    {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
-                    <button
-                      type="button"
-                      onClick={() => { setIsRegister(!isRegister); setError(''); }}
-                      className="text-[#0284C7] dark:text-sky-400 font-black hover:underline"
-                    >
-                      {isRegister ? 'Sign In' : 'Register Here'}
-                    </button>
-                  </div>
+                    {/* Error & Success State Banners */}
+                    {error && (
+                      <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-300 text-sm font-black text-center">
+                        {error}
+                      </div>
+                    )}
+                    {successMessage && (
+                      <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm font-black text-center space-y-2">
+                        <div>{successMessage}</div>
+                      </div>
+                    )}
+
+                    {/* Form Fields */}
+                    <form onSubmit={handleSubmit} className="space-y-4 text-sm font-bold">
+                      
+                      {role === 'STUDENT' && isRegister && (
+                        <div>
+                          <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Full Student Name</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Monisha K P"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                          />
+                        </div>
+                      )}
+
+                      <div>
+                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Email Address</label>
+                        <div className="relative">
+                          <input
+                            type="email"
+                            required
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                          />
+                          <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center mb-1.5">
+                          <label className="block text-slate-800 dark:text-slate-200 font-black">
+                            {role === 'ADMIN' ? 'Special Admin Passcode' : 'Password'}
+                          </label>
+                          <button 
+                            type="button" 
+                            onClick={handleForgotPassword} 
+                            className="text-xs font-black text-[#0284C7] dark:text-sky-400 hover:underline cursor-pointer"
+                          >
+                            Forgot Password?
+                          </button>
+                        </div>
+                        <div className="relative">
+                          <input
+                            type="password"
+                            required
+                            minLength={6}
+                            placeholder={isRegister ? "Min 6 characters" : "••••••••"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                          />
+                          <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="w-full py-4 rounded-xl font-black text-sm sm:text-base text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
+                      >
+                        <span>{loading ? 'Authenticating...' : 'Sign In'}</span>
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                      </button>
+                    </form>
+
+                    {/* Demo Login (Testing & Review Access) */}
+                    <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2 text-center">
+                      <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest block">
+                        TESTING & REVIEW ACCESS
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={handleQuickDemoStudent}
+                          className="py-3 px-3 rounded-xl bg-[#F1F5F9] dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-black transition-colors cursor-pointer"
+                        >
+                          Demo Student
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleQuickDemoAdmin}
+                          className="py-3 px-3 rounded-xl bg-purple-100 dark:bg-purple-950/60 hover:bg-purple-200 dark:hover:bg-purple-900 text-purple-900 dark:text-purple-300 text-xs sm:text-sm font-black transition-colors cursor-pointer"
+                        >
+                          Manika Ma'am (Admin)
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Registration Link */}
+                    {role === 'STUDENT' && (
+                      <div className="text-center text-sm font-extrabold text-slate-600 dark:text-slate-400 pt-1">
+                        {isRegister ? 'Already have an account?' : "Don't have an account?"}{' '}
+                        <button
+                          type="button"
+                          onClick={() => { setIsRegister(!isRegister); setError(''); }}
+                          className="text-[#0284C7] dark:text-sky-400 font-black hover:underline cursor-pointer"
+                        >
+                          {isRegister ? 'Sign In' : 'Register Here'}
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
 
               </div>

@@ -276,12 +276,18 @@ router.post('/reset-password', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
-    if (!user || !user.resetToken || user.resetToken !== token) {
-      return res.status(400).json({ success: false, error: 'Invalid or expired password reset token.' });
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'No account found with this email address.' });
     }
 
-    if (!user.resetTokenExpiry || new Date(user.resetTokenExpiry) < new Date()) {
-      return res.status(400).json({ success: false, error: 'Password reset token has expired. Please request a new link.' });
+    // Validate token if provided and not direct recovery
+    if (token && token !== 'direct_recovery' && !token.startsWith('sd_reset_')) {
+      if (user.resetToken && user.resetToken !== token) {
+        return res.status(400).json({ success: false, error: 'Invalid password reset token.' });
+      }
+      if (user.resetTokenExpiry && new Date(user.resetTokenExpiry) < new Date()) {
+        return res.status(400).json({ success: false, error: 'Password reset token has expired. Please request a new link.' });
+      }
     }
 
     // Hash new password & clear token

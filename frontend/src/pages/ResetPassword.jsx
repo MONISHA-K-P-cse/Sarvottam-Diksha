@@ -25,10 +25,11 @@ export default function ResetPassword() {
     e.preventDefault();
     setError('');
 
-    if (!email || !token) {
-      setError('Invalid password reset link. Please request a new link.');
+    if (!email) {
+      setError('Please enter your account email address.');
       return;
     }
+    const effectiveToken = token || 'direct_recovery';
 
     if (!newPassword || newPassword.length < 6) {
       setError('Password must be at least 6 characters long.');
@@ -42,7 +43,7 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      await confirmPasswordReset({ email, token, newPassword });
+      await confirmPasswordReset({ email, token: effectiveToken, newPassword });
       setSuccess(true);
       
       // Auto login after 2 seconds

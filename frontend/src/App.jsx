@@ -33,6 +33,7 @@ import Leaderboard from './pages/Leaderboard';
 import StudentProfile from './pages/StudentProfile';
 import Downloads from './pages/Downloads';
 import LegalPages from './pages/LegalPages';
+import ResetPassword from './pages/ResetPassword';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import CourseManagerPage from './pages/admin/CourseManagerPage';
 
@@ -57,7 +58,7 @@ function AppContent() {
   }, []);
 
   // Allow reset-password route without enforcing gated login screen
-  if (window.location.pathname === '/reset-password') {
+  if (location.pathname === '/reset-password' || window.location.pathname === '/reset-password') {
     return <ResetPassword />;
   }
 
@@ -117,6 +118,7 @@ function AppContent() {
           <Route path="/learn/:courseId" element={user ? <CourseViewer /> : <GatedAuthScreen />} />
           <Route path="/test/:quizId" element={user ? <TestEngine /> : <GatedAuthScreen />} />
           <Route path="/test-result/:attemptId" element={user ? <TestResult /> : <GatedAuthScreen />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/free-test" element={user ? <FreeResources /> : <GatedAuthScreen />} />
           <Route path="/chats" element={user ? <Chats /> : <GatedAuthScreen />} />
           <Route path="/leaderboard" element={user ? <Leaderboard /> : <GatedAuthScreen />} />

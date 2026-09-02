@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import ReactDOM from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useBranding } from '../context/BrandingContext';
@@ -35,7 +36,9 @@ import {
   FileCheck,
   ThumbsUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ZoomIn,
+  Maximize2
 } from 'lucide-react';
 
 export default function Home({ onOpenAuthModal }) {
@@ -51,6 +54,7 @@ export default function Home({ onOpenAuthModal }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [studentAttempts, setStudentAttempts] = useState([]);
   const [enrolledCount, setEnrolledCount] = useState(0);
+  const [enlargedBannerImage, setEnlargedBannerImage] = useState(null);
 
   const bannerSlides = [
     { src: results2025, alt: 'Maths Result 2025' },
@@ -449,14 +453,32 @@ export default function Home({ onOpenAuthModal }) {
                         </div>
                       </div>
 
-                      {/* Right Side: FULL CRISP UPLOADED IMAGE DISPLAY (Zero dark overlay, 100% visible) */}
-                      <div className="w-full md:w-5/12 flex items-center justify-center p-2 relative z-10 shrink-0">
-                        <img
-                          src={imageSrc}
-                          alt={b.title || 'Banner Graphic'}
-                          className="max-h-56 sm:max-h-64 w-auto max-w-full object-contain rounded-2xl shadow-md border-2 border-white/60 dark:border-slate-700 bg-white"
-                          onError={(e) => { e.target.src = posterBanner; }}
-                        />
+                      {/* Right Side: FULL CRISP UPLOADED IMAGE DISPLAY (Clickable to Enlarge / Zoom) */}
+                      <div 
+                        onClick={() => setEnlargedBannerImage({
+                          title: b.title,
+                          description: b.description,
+                          src: imageSrc,
+                          link: b.link,
+                          buttonText: b.buttonText
+                        })}
+                        className="w-full md:w-5/12 flex items-center justify-center p-2 relative z-10 shrink-0 cursor-pointer cursor-zoom-in banner-zoom-trigger group/img"
+                        title="Click to enlarge banner image"
+                      >
+                        <div className="relative rounded-2xl overflow-hidden shadow-md border-2 border-white/80 dark:border-slate-700 bg-white transition-transform duration-300 group-hover/img:scale-[1.03]">
+                          <img
+                            src={imageSrc}
+                            alt={b.title || 'Banner Graphic'}
+                            className="max-h-56 sm:max-h-64 w-auto max-w-full object-contain"
+                            onError={(e) => { e.target.src = posterBanner; }}
+                          />
+
+                          {/* Hover Zoom Hint Overlay */}
+                          <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-1.5 text-white font-black text-xs backdrop-blur-[2px]">
+                            <ZoomIn className="w-5 h-5 text-amber-300" />
+                            <span>Click to Enlarge</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -986,6 +1008,65 @@ export default function Home({ onOpenAuthModal }) {
             </div>
           </div>
         </div>
+      )}
+      {/* ================= ENLARGED BANNER IMAGE LIGHTBOX MODAL (Portal - renders at body level) ================= */}
+      {enlargedBannerImage && ReactDOM.createPortal(
+        <div
+          style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(2,6,23,0.88)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+          onClick={() => setEnlargedBannerImage(null)}
+        >
+          <div
+            style={{ background: '#fff', borderRadius: '24px', border: '2px solid #38bdf8', boxShadow: '0 25px 60px rgba(0,0,0,0.5)', maxWidth: '1000px', width: '100%', maxHeight: '90vh', overflow: 'hidden', display: 'flex', flexDirection: 'column', position: 'relative' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ background: '#03458C', color: '#fff', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Maximize2 style={{ width: '18px', height: '18px' }} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: '15px' }}>{enlargedBannerImage.title || 'Enlarged Banner View'}</div>
+                  <div style={{ fontSize: '11px', color: '#bae6fd', fontWeight: 600 }}>Full resolution preview • Click ✕ or anywhere outside to close</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setEnlargedBannerImage(null)}
+                style={{ padding: '8px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                title="Close"
+              >
+                <X style={{ width: '22px', height: '22px' }} />
+              </button>
+            </div>
+
+            {/* Image Body — full crisp view */}
+            <div style={{ flex: 1, background: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', overflowY: 'auto', minHeight: '300px' }}>
+              <img
+                src={enlargedBannerImage.src}
+                alt={enlargedBannerImage.title || 'Banner'}
+                style={{ maxWidth: '100%', maxHeight: '65vh', objectFit: 'contain', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.6)', border: '2px solid rgba(255,255,255,0.15)' }}
+              />
+            </div>
+
+            {/* Footer */}
+            <div style={{ background: '#f1f5f9', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexShrink: 0, borderTop: '1px solid #e2e8f0' }}>
+              <p style={{ fontSize: '12px', fontWeight: 700, color: '#475569', margin: 0, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {enlargedBannerImage.description}
+              </p>
+              {enlargedBannerImage.link && (
+                <Link
+                  to={enlargedBannerImage.link}
+                  onClick={() => setEnlargedBannerImage(null)}
+                  style={{ background: '#03458C', color: '#fff', padding: '10px 24px', borderRadius: '14px', fontWeight: 900, fontSize: '12px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}
+                >
+                  <span>{enlargedBannerImage.buttonText || 'Explore Now'}</span>
+                  <ArrowRight style={{ width: '14px', height: '14px' }} />
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
 
     </div>
