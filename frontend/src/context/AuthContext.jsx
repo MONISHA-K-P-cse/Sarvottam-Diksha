@@ -392,21 +392,21 @@ const login = async (email, password) => {
 
     let emailSent = false;
 
-    // 1. Send via Firebase Authentication (Sends official password reset email to inbox)
+    // 1. Send via Firebase Authentication (Sends official password reset email to inbox via configured SMTP)
     try {
-      await sendPasswordResetEmail(auth, cleanEmail);
+      const actionCodeSettings = {
+        url: `${window.location.origin}/reset-password`,
+        handleCodeInApp: true
+      };
+      await sendPasswordResetEmail(auth, cleanEmail, actionCodeSettings);
       emailSent = true;
     } catch (fbErr) {
       console.warn('Firebase reset email notice:', fbErr.code, fbErr.message);
-      if (fbErr.code === 'auth/user-not-found') {
-        try {
-          const tempPass = 'TempPass_' + Math.random().toString(36).slice(2) + '!' + Date.now();
-          await createUserWithEmailAndPassword(auth, cleanEmail, tempPass);
-          await sendPasswordResetEmail(auth, cleanEmail);
-          emailSent = true;
-        } catch (createErr) {
-          console.warn('Firebase user auto-provision notice:', createErr.message);
-        }
+      try {
+        await sendPasswordResetEmail(auth, cleanEmail);
+        emailSent = true;
+      } catch (e2) {
+        console.warn('Firebase standard reset notice:', e2.code, e2.message);
       }
     }
 
