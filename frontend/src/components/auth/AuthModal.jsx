@@ -86,6 +86,7 @@ export default function AuthModal({ isOpen, onClose }) {
     e?.preventDefault();
     setError('');
     setSuccessMessage('');
+    setResetLinkUrl('');
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail) {
       setError('Please enter your registered email address.');
@@ -100,6 +101,9 @@ export default function AuthModal({ isOpen, onClose }) {
     try {
       const res = await resetPassword(cleanEmail);
       setSuccessMessage(res.message || `Password recovery link dispatched to ${cleanEmail}! Please check your email inbox.`);
+      if (res.resetLink) {
+        setResetLinkUrl(res.resetLink);
+      }
     } catch (err) {
       setError(err.message || 'Failed to send password recovery email.');
     } finally {
@@ -184,13 +188,31 @@ export default function AuthModal({ isOpen, onClose }) {
                     Click the link inside the email to set your new password.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
-                  className="mt-2 px-5 py-2 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-sm transition-all cursor-pointer"
-                >
-                  ← Return to Sign In
-                </button>
+
+                {resetLinkUrl && (
+                  <div className="pt-2 border-t border-emerald-200 space-y-2">
+                    <p className="text-[11px] font-semibold text-emerald-800">
+                      Didn't receive the email in your inbox?
+                    </p>
+                    <a
+                      href={resetLinkUrl}
+                      onClick={onClose}
+                      className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md transition-all active:scale-95 cursor-pointer"
+                    >
+                      <span>Open Reset Page Directly →</span>
+                    </a>
+                  </div>
+                )}
+
+                <div className="pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); setResetLinkUrl(''); }}
+                    className="text-xs font-black text-slate-600 hover:text-[#0284C7] transition-colors cursor-pointer"
+                  >
+                    ← Return to Sign In
+                  </button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleForgotPasswordSubmit} className="space-y-3.5 text-xs font-bold">

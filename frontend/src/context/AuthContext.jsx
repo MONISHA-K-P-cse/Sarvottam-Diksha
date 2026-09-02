@@ -420,15 +420,18 @@ const login = async (email, password) => {
       console.warn('Backend forgot-password notice:', apiErr.message);
     }
 
-    // Store local recovery token
+    // Store local recovery token & create direct recovery link
     const fallbackToken = 'sd_sec_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
     const resetTokens = JSON.parse(localStorage.getItem('sd_reset_tokens') || '{}');
     resetTokens[cleanEmail] = { token: fallbackToken, expires: Date.now() + 3600000 };
     localStorage.setItem('sd_reset_tokens', JSON.stringify(resetTokens));
 
+    const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(cleanEmail)}&token=${fallbackToken}`;
+
     return {
       success: true,
-      message: `A secure password reset email has been sent to ${cleanEmail}! Please check your email inbox (and spam folder) and click the link to choose your new password.`
+      message: `A password reset email has been sent to ${cleanEmail}! Please check your email inbox and spam folder.`,
+      resetLink
     };
   };
 

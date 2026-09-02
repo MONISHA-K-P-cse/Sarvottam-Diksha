@@ -191,6 +191,7 @@ export default function GatedAuthScreen() {
     e?.preventDefault();
     setError('');
     setSuccessMessage('');
+    setResetLinkUrl('');
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail) {
       setError('Please enter your registered email address.');
@@ -205,6 +206,9 @@ export default function GatedAuthScreen() {
     try {
       const res = await resetPassword(cleanEmail);
       setSuccessMessage(res.message || `A password recovery email has been sent to ${cleanEmail}! Please check your inbox.`);
+      if (res.resetLink) {
+        setResetLinkUrl(res.resetLink);
+      }
     } catch (err) {
       setError(err.message || 'Failed to send password recovery email.');
     } finally {
@@ -786,7 +790,7 @@ export default function GatedAuthScreen() {
                     )}
 
                     {successMessage ? (
-                      <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-400 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 text-center space-y-3 animate-fade-in shadow-xs">
+                      <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-400 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 text-center space-y-4 animate-fade-in shadow-xs">
                         <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 rounded-full flex items-center justify-center mx-auto border border-emerald-300 dark:border-emerald-700">
                           <Mail className="w-6 h-6" />
                         </div>
@@ -796,16 +800,33 @@ export default function GatedAuthScreen() {
                             {successMessage}
                           </p>
                           <p className="text-xs text-emerald-700 dark:text-emerald-400 pt-1">
-                            Click the secure link inside the email to set your new password. Check your spam/junk folder if needed.
+                            Click the secure link inside the email to set your new password.
                           </p>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
-                          className="mt-3 px-6 py-2.5 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-sm transition-all cursor-pointer"
-                        >
-                          ← Return to Sign In
-                        </button>
+
+                        {resetLinkUrl && (
+                          <div className="pt-3 border-t border-emerald-200 dark:border-emerald-800/80 space-y-2">
+                            <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                              Did not receive the email in your inbox? Use the instant recovery button:
+                            </p>
+                            <a
+                              href={resetLinkUrl}
+                              className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+                            >
+                              <span>Open Password Reset Page Directly →</span>
+                            </a>
+                          </div>
+                        )}
+
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); setResetLinkUrl(''); }}
+                            className="text-xs font-black text-slate-600 dark:text-slate-400 hover:text-[#0284C7] dark:hover:text-sky-400 transition-colors cursor-pointer"
+                          >
+                            ← Return to Sign In
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 text-xs sm:text-sm font-bold">
