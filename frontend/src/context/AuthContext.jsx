@@ -392,46 +392,20 @@ const login = async (email, password) => {
 
     let emailSent = false;
 
-    // 1. Send via Firebase Authentication (Sends official password reset email to inbox via configured SMTP)
+    // 1. Send via Firebase Authentication (Sends password reset email directly to inbox)
     try {
-      const actionCodeSettings = {
-        url: `${window.location.origin}/reset-password`,
-        handleCodeInApp: true
-      };
-      await sendPasswordResetEmail(auth, cleanEmail, actionCodeSettings);
-      emailSent = true;
+      await sendPasswordResetEmail(auth, cleanEmail);
     } catch (fbErr) {
       console.warn('Firebase reset email notice:', fbErr.code, fbErr.message);
-      try {
-        await sendPasswordResetEmail(auth, cleanEmail);
-        emailSent = true;
-      } catch (e2) {
-        console.warn('Firebase standard reset notice:', e2.code, e2.message);
+      if (fbErr.code === 'auth/user-not-found') {
+        throw new Error('No user account found with this email address. Please register first.');
       }
+      throw new Error(getFirebaseErrorMessage(fbErr));
     }
-
-    // 2. Also dispatch via backend NodeMailer SMTP if running
-    try {
-      const res = await axios.post('/api/auth/forgot-password', { email: cleanEmail });
-      if (res.data && res.data.success) {
-        emailSent = true;
-      }
-    } catch (apiErr) {
-      console.warn('Backend forgot-password notice:', apiErr.message);
-    }
-
-    // Store local recovery token & create direct recovery link
-    const fallbackToken = 'sd_sec_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-    const resetTokens = JSON.parse(localStorage.getItem('sd_reset_tokens') || '{}');
-    resetTokens[cleanEmail] = { token: fallbackToken, expires: Date.now() + 3600000 };
-    localStorage.setItem('sd_reset_tokens', JSON.stringify(resetTokens));
-
-    const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(cleanEmail)}&token=${fallbackToken}`;
 
     return {
       success: true,
-      message: `A password reset email has been sent to ${cleanEmail}! Please check your email inbox and spam folder.`,
-      resetLink
+      message: `A password reset email has been sent to ${cleanEmail}! Please check your email inbox and spam folder.`
     };
   };
 
