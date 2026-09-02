@@ -86,38 +86,22 @@ export default function AuthModal({ isOpen, onClose }) {
     e?.preventDefault();
     setError('');
     setSuccessMessage('');
-    if (!email) {
-      setError('Please enter your account email address.');
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      setError('Please enter your registered email address.');
       return;
     }
-    if (!newPassword || newPassword.length < 6) {
-      setError('New password must be at least 6 characters long.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match. Please verify your entries.');
+    if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
     try {
-      await confirmPasswordReset({ email, token: 'direct_recovery', newPassword });
-      setSuccessMessage('🎉 Password reset successfully! Logging you in...');
-      setTimeout(async () => {
-        try {
-          await login(email, newPassword);
-          onClose();
-          if (role === 'ADMIN' || email.includes('admin') || email.includes('diksha')) {
-            navigate('/admin');
-          } else {
-            navigate('/my-courses');
-          }
-        } catch (loginErr) {
-          setIsForgotPassword(false);
-        }
-      }, 1500);
+      const res = await resetPassword(cleanEmail);
+      setSuccessMessage(res.message || `Password recovery link dispatched to ${cleanEmail}! Please check your email inbox.`);
     } catch (err) {
-      setError(err.message || 'Failed to reset password.');
+      setError(err.message || 'Failed to send password recovery email.');
     } finally {
       setLoading(false);
     }
@@ -153,21 +137,22 @@ export default function AuthModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
-      <div className="bg-white rounded-3xl border-2 border-slate-200 shadow-2xl max-w-md w-full p-6 sm:p-8 space-y-6 relative">
+      <div className="relative w-full max-w-md bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-5">
         
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+          className="absolute right-5 top-5 p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-full transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Header Logo & Title */}
-        <div className="text-center space-y-2">
-          <img src={logoImg} alt="Sarvottam Diksha Logo" className="h-16 w-auto mx-auto object-contain" />
-          <h3 className="text-2xl font-black text-slate-900">
-            {role === 'ADMIN' ? 'Admin Teacher Login' : isRegister ? 'Create Student Account' : 'Student Portal Login'}
-          </h3>
+        {/* Brand Header */}
+        <div className="text-center space-y-1">
+          <img src={logoImg} alt="Sarvottam Diksha" className="h-12 mx-auto drop-shadow-xs" />
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            {isForgotPassword ? 'Password Recovery' : role === 'ADMIN' ? 'Admin Portal Access' : isRegister ? 'Student Registration' : 'Student Portal Login'}
+          </h2>
           <p className="text-xs font-bold text-slate-600">Sarvottam Diksha Mathematics (Grades 6-12)</p>
         </div>
 
@@ -175,8 +160,8 @@ export default function AuthModal({ isOpen, onClose }) {
           <div className="space-y-4 animate-fade-in">
             <div className="text-center space-y-1">
               <span className="text-[10px] font-black uppercase tracking-wider text-[#0284C7]">ACCOUNT SECURITY</span>
-              <h3 className="text-xl font-black text-slate-900">Reset Your Password</h3>
-              <p className="text-xs text-slate-500">Enter your email and choose a new password.</p>
+              <h3 className="text-lg font-black text-slate-900">Recover Your Password</h3>
+              <p className="text-xs text-slate-500">Enter your registered email address to receive a secure recovery link.</p>
             </div>
 
             {error && (
@@ -185,79 +170,65 @@ export default function AuthModal({ isOpen, onClose }) {
               </div>
             )}
 
-            {successMessage && (
-              <div className="p-4 rounded-2xl bg-emerald-50 border-2 border-emerald-300 text-emerald-900 text-xs font-black text-center space-y-2 animate-fade-in shadow-xs">
-                <div>{successMessage}</div>
+            {successMessage ? (
+              <div className="p-5 rounded-2xl bg-emerald-50 border-2 border-emerald-400 text-emerald-950 text-center space-y-3 animate-fade-in shadow-xs">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto border border-emerald-300">
+                  <Mail className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-black text-emerald-900">Check Your Email</h4>
+                  <p className="text-xs font-bold text-emerald-800 leading-relaxed">
+                    {successMessage}
+                  </p>
+                  <p className="text-[11px] font-semibold text-emerald-700 pt-1">
+                    Click the link inside the email to set your new password.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
+                  className="mt-2 px-5 py-2 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-sm transition-all cursor-pointer"
+                >
+                  ← Return to Sign In
+                </button>
               </div>
+            ) : (
+              <form onSubmit={handleForgotPasswordSubmit} className="space-y-3.5 text-xs font-bold">
+                <div>
+                  <label className="block text-slate-800 mb-1">Your Registered Email Address</label>
+                  <div className="relative">
+                    <input
+                      type="email"
+                      required
+                      placeholder="e.g. your_email@gmail.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7] placeholder-slate-400"
+                    />
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  <span>{loading ? 'Sending Recovery Email...' : 'Send Password Reset Email'}</span>
+                </button>
+
+                <div className="text-center pt-1">
+                  <button
+                    type="button"
+                    onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
+                    className="text-xs font-black text-slate-600 hover:text-[#0284C7] transition-colors cursor-pointer"
+                  >
+                    ← Return to Sign In
+                  </button>
+                </div>
+              </form>
             )}
-
-            <form onSubmit={handleForgotPasswordSubmit} className="space-y-3.5 text-xs font-bold">
-              <div>
-                <label className="block text-slate-800 mb-1">Account Email</label>
-                <div className="relative">
-                  <input
-                    type="email"
-                    required
-                    placeholder="your_email@gmail.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7]"
-                  />
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-800 mb-1">New Password</label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="At least 6 characters"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7]"
-                  />
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-slate-800 mb-1">Confirm New Password</label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="Re-enter your new password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7]"
-                  />
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full py-3.5 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer mt-2"
-              >
-                <span>{loading ? 'Updating Password...' : 'Save New Password & Log In'}</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </form>
-
-            <div className="text-center pt-1">
-              <button
-                type="button"
-                onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
-                className="text-xs font-black text-slate-600 hover:text-[#0284C7] transition-colors cursor-pointer"
-              >
-                ← Return to Sign In
-              </button>
-            </div>
           </div>
         ) : (
           <>

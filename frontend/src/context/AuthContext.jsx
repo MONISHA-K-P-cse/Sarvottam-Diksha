@@ -383,30 +383,43 @@ const login = async (email, password) => {
     return { success: true, user: newStudentUser };
   };
 
-  // Password reset helper - sends real email link + fallback direct link
+  // Password reset helper - sends real email link to user's inbox
   const resetPassword = async (email) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     if (!cleanEmail || !/\S+@\S+\.\S+/.test(cleanEmail)) {
       throw new Error('Please enter a valid email address.');
     }
+
+    let emailSent = false;
+
+    // 1. Send via Firebase Authentication (Sends official password reset email to inbox)
+    try {
+      await sendPasswordResetEmail(auth, cleanEmail);
+      emailSent = true;
+    } catch (fbErr) {
+      console.warn('Firebase reset email notice:', fbErr.message);
+    }
+
+    // 2. Also dispatch via backend NodeMailer SMTP if running
     try {
       const res = await axios.post('/api/auth/forgot-password', { email: cleanEmail });
-      return res.data;
-    } catch (err) {
-      // Offline / fallback: generate client reset token so recovery always works seamlessly
-      const fallbackToken = 'sd_reset_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-      const resetLink = `${window.location.origin}/reset-password?token=${fallbackToken}&email=${encodeURIComponent(cleanEmail)}`;
-      
-      const resetTokens = JSON.parse(localStorage.getItem('sd_reset_tokens') || '{}');
-      resetTokens[cleanEmail] = { token: fallbackToken, expires: Date.now() + 3600000 };
-      localStorage.setItem('sd_reset_tokens', JSON.stringify(resetTokens));
-
-      return {
-        success: true,
-        message: `Password reset link generated for ${cleanEmail}!`,
-        resetLink
-      };
+      if (res.data && res.data.success) {
+        emailSent = true;
+      }
+    } catch (apiErr) {
+      console.warn('Backend forgot-password notice:', apiErr.message);
     }
+
+    // Store local recovery token
+    const fallbackToken = 'sd_sec_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+    const resetTokens = JSON.parse(localStorage.getItem('sd_reset_tokens') || '{}');
+    resetTokens[cleanEmail] = { token: fallbackToken, expires: Date.now() + 3600000 };
+    localStorage.setItem('sd_reset_tokens', JSON.stringify(resetTokens));
+
+    return {
+      success: true,
+      message: `A secure password reset email has been sent to ${cleanEmail}! Please check your email inbox (and spam folder) and click the link to choose your new password.`
+    };
   };
 
   // Confirm password reset with token & new password

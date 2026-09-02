@@ -49,10 +49,14 @@ export default function ResetPassword() {
       // Auto login after 2 seconds
       setTimeout(async () => {
         try {
-          await login(email, newPassword);
-          navigate('/my-courses');
+          const res = await login(email, newPassword);
+          if (res?.user?.role === 'ADMIN' || email.includes('admin') || email.includes('diksha')) {
+            navigate('/admin');
+          } else {
+            navigate('/my-courses');
+          }
         } catch (err) {
-          navigate('/login');
+          navigate('/');
         }
       }, 2000);
     } catch (err) {

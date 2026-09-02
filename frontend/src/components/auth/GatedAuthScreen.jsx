@@ -191,37 +191,22 @@ export default function GatedAuthScreen() {
     e?.preventDefault();
     setError('');
     setSuccessMessage('');
-    if (!email) {
-      setError('Please enter your account email address.');
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      setError('Please enter your registered email address.');
       return;
     }
-    if (!newPassword || newPassword.length < 6) {
-      setError('New password must be at least 6 characters long.');
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match. Please verify your entries.');
+    if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
+      setError('Please enter a valid email address.');
       return;
     }
 
     setLoading(true);
     try {
-      await confirmPasswordReset({ email, token: 'direct_recovery', newPassword });
-      setSuccessMessage('🎉 Password reset successfully! Logging you into your portal...');
-      setTimeout(async () => {
-        try {
-          await login(email, newPassword);
-          if (role === 'ADMIN' || email.includes('admin') || email.includes('diksha')) {
-            navigate('/admin');
-          } else {
-            navigate('/my-courses');
-          }
-        } catch (loginErr) {
-          setIsForgotPassword(false);
-        }
-      }, 1500);
+      const res = await resetPassword(cleanEmail);
+      setSuccessMessage(res.message || `A password recovery email has been sent to ${cleanEmail}! Please check your inbox.`);
     } catch (err) {
-      setError(err.message || 'Failed to reset password.');
+      setError(err.message || 'Failed to send password recovery email.');
     } finally {
       setLoading(false);
     }
@@ -795,83 +780,72 @@ export default function GatedAuthScreen() {
 
                     {/* Error & Success State Banners */}
                     {error && (
-                      <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-300 text-sm font-black text-center">
+                      <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-300 text-xs sm:text-sm font-black text-center animate-fade-in shadow-xs">
                         {error}
                       </div>
                     )}
-                    {successMessage && (
-                      <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-300 text-xs sm:text-sm font-black text-center space-y-2">
-                        <div>{successMessage}</div>
+
+                    {successMessage ? (
+                      <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border-2 border-emerald-400 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200 text-center space-y-3 animate-fade-in shadow-xs">
+                        <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300 rounded-full flex items-center justify-center mx-auto border border-emerald-300 dark:border-emerald-700">
+                          <Mail className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="text-base font-black text-emerald-900 dark:text-emerald-100">Check Your Email</h4>
+                          <p className="text-xs sm:text-sm font-bold text-emerald-800 dark:text-emerald-300 leading-relaxed">
+                            {successMessage}
+                          </p>
+                          <p className="text-xs text-emerald-700 dark:text-emerald-400 pt-1">
+                            Click the secure link inside the email to set your new password. Check your spam/junk folder if needed.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
+                          className="mt-3 px-6 py-2.5 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-sm transition-all cursor-pointer"
+                        >
+                          ← Return to Sign In
+                        </button>
                       </div>
+                    ) : (
+                      <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 text-xs sm:text-sm font-bold">
+                        <div>
+                          <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">
+                            Registered Email Address
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="email"
+                              required
+                              placeholder="e.g. your_email@gmail.com"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base placeholder-slate-400 dark:placeholder-slate-500"
+                            />
+                            <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="w-full py-4 rounded-xl font-black text-sm sm:text-base text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
+                        >
+                          <Mail className="w-5 h-5" />
+                          <span>{loading ? 'Sending Recovery Email...' : 'Send Password Reset Email'}</span>
+                        </button>
+
+                        <div className="text-center pt-2">
+                          <button
+                            type="button"
+                            onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
+                            className="text-xs font-black text-slate-600 dark:text-slate-400 hover:text-[#0284C7] dark:hover:text-sky-400 transition-colors cursor-pointer"
+                          >
+                            ← Return to Sign In
+                          </button>
+                        </div>
+                      </form>
                     )}
-
-                    <form onSubmit={handleForgotPasswordSubmit} className="space-y-4 text-sm font-bold">
-                      <div>
-                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Account Email</label>
-                        <div className="relative">
-                          <input
-                            type="email"
-                            required
-                            placeholder="your_email@gmail.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
-                          />
-                          <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">New Password</label>
-                        <div className="relative">
-                          <input
-                            type="password"
-                            required
-                            minLength={6}
-                            placeholder="At least 6 characters"
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
-                          />
-                          <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Confirm New Password</label>
-                        <div className="relative">
-                          <input
-                            type="password"
-                            required
-                            minLength={6}
-                            placeholder="Re-enter your new password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
-                          />
-                          <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
-                        </div>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full py-4 rounded-xl font-black text-sm sm:text-base text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 group cursor-pointer"
-                      >
-                        <span>{loading ? 'Updating Password...' : 'Save New Password & Sign In'}</span>
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                      </button>
-                    </form>
-
-                    <div className="text-center pt-2">
-                      <button
-                        type="button"
-                        onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); }}
-                        className="text-xs font-black text-slate-600 dark:text-slate-400 hover:text-[#0284C7] dark:hover:text-sky-400 transition-colors cursor-pointer"
-                      >
-                        ← Return to Sign In
-                      </button>
-                    </div>
                   </div>
                 ) : (
                   <>
