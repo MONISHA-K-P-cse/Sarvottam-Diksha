@@ -216,8 +216,9 @@ router.post('/forgot-password', async (req, res) => {
       }
     });
 
-    // Generate reset URL
-    const resetLink = `${req.headers.origin || 'http://localhost:5173'}/reset-password?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
+    // Generate reset URL — always use the production frontend URL (not localhost)
+    const frontendBase = process.env.FRONTEND_URL || 'https://sarvottam-diksha.web.app';
+    const resetLink = `${frontendBase}/reset-password?token=${token}&email=${encodeURIComponent(cleanEmail)}`;
 
     // Send email using emailService
     let emailStatus = null;
