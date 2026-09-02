@@ -17,9 +17,9 @@ export default function AuthModal({ isOpen, onClose }) {
 
   // Form Fields
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('monisha@gmail.com');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('student123');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,14 +30,10 @@ export default function AuthModal({ isOpen, onClose }) {
     setRole(selectedRole);
     setError('');
     setSuccessMessage('');
+    setIsForgotPassword(false);
     setResetLinkUrl('');
-    if (selectedRole === 'ADMIN') {
-      setEmail('dikshasarvottam@gmail.com');
-      setPassword('admin123');
-    } else {
-      setEmail('monisha@gmail.com');
-      setPassword('student123');
-    }
+    setEmail('');
+    setPassword('');
   };
 
   if (!isOpen) return null;
@@ -50,8 +46,15 @@ export default function AuthModal({ isOpen, onClose }) {
     setLoading(true);
 
     try {
-      const targetEmail = (email || '').trim() || (role === 'ADMIN' ? 'dikshasarvottam@gmail.com' : 'monisha@gmail.com');
-      const targetPassword = password || (role === 'ADMIN' ? 'admin123' : 'student123');
+      const targetEmail = (email || '').trim();
+      const targetPassword = password || '';
+
+      if (!targetEmail) {
+        throw new Error('Please enter your email address.');
+      }
+      if (!targetPassword) {
+        throw new Error('Please enter your password.');
+      }
 
       if (role === 'ADMIN') {
         await login(targetEmail, targetPassword);
@@ -59,7 +62,7 @@ export default function AuthModal({ isOpen, onClose }) {
         navigate('/admin');
       } else {
         if (isRegister) {
-          await register(targetEmail, targetPassword, { name: name || 'Monisha K P', phone: phone || '+91 98765 43210' });
+          await register(targetEmail, targetPassword, { name: name || 'Student', phone: phone || '' });
         } else {
           await login(targetEmail, targetPassword);
         }
@@ -332,9 +335,10 @@ export default function AuthModal({ isOpen, onClose }) {
                   <input
                     type="email"
                     required
+                    placeholder={role === 'ADMIN' ? "admin@sarvottamdiksha.com" : "student@gmail.com"}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7]"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7] placeholder-slate-400"
                   />
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 </div>
@@ -374,10 +378,10 @@ export default function AuthModal({ isOpen, onClose }) {
                     type="password"
                     required
                     minLength={6}
-                    placeholder={isRegister ? "Min 6 characters" : "••••••••"}
+                    placeholder={isRegister ? "Min 6 characters" : role === 'ADMIN' ? "Enter admin passcode" : "Enter your password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7]"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 pl-10 text-slate-900 font-semibold focus:outline-none focus:border-[#0284C7] placeholder-slate-400"
                   />
                   <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
                 </div>

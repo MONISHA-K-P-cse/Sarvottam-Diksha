@@ -66,9 +66,9 @@ export default function GatedAuthScreen() {
   
   // Form fields
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('monisha@gmail.com');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('student123');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [newPassword, setNewPassword] = useState('');
@@ -119,13 +119,10 @@ export default function GatedAuthScreen() {
   const handleRoleChange = (selectedRole) => {
     setRole(selectedRole);
     setError('');
-    if (selectedRole === 'ADMIN') {
-      setEmail('dikshasarvottam@gmail.com');
-      setPassword('admin123');
-    } else {
-      setEmail('monisha@gmail.com');
-      setPassword('student123');
-    }
+    setSuccessMessage('');
+    setIsForgotPassword(false);
+    setEmail('');
+    setPassword('');
   };
 
   const scrollToLoginPortal = (targetMode = 'LOGIN') => {
@@ -153,20 +150,19 @@ export default function GatedAuthScreen() {
     setLoading(true);
 
     try {
-      let targetEmail = (email || '').trim();
-      let targetPassword = (password || '').trim();
+      const targetEmail = (email || '').trim();
+      const targetPassword = password || '';
 
-      if (role === 'ADMIN') {
-        targetEmail = targetEmail || 'dikshasarvottam@gmail.com';
-        targetPassword = targetPassword || 'admin123';
-      } else {
-        targetEmail = targetEmail || 'monisha@gmail.com';
-        targetPassword = targetPassword || 'student123';
+      if (!targetEmail) {
+        throw new Error('Please enter your email address.');
+      }
+      if (!targetPassword) {
+        throw new Error('Please enter your password.');
       }
 
       let res;
       if (role === 'STUDENT' && isRegister) {
-        res = await register(targetEmail, targetPassword, { name: name || 'Monisha K P', phone: phone || '+91 98765 43210' });
+        res = await register(targetEmail, targetPassword, { name: name || 'Student', phone: phone || '' });
       } else {
         res = await login(targetEmail, targetPassword);
       }
@@ -946,14 +942,17 @@ export default function GatedAuthScreen() {
                       )}
 
                       <div>
-                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">Email Address</label>
+                        <label className="block text-slate-800 dark:text-slate-200 mb-1.5 font-black">
+                          {role === 'ADMIN' ? 'Admin Email' : 'Email Address'}
+                        </label>
                         <div className="relative">
                           <input
                             type="email"
                             required
+                            placeholder={role === 'ADMIN' ? "admin@sarvottamdiksha.com" : "student@gmail.com"}
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base placeholder-slate-400 dark:placeholder-slate-500"
                           />
                           <Mail className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
                         </div>
@@ -977,10 +976,10 @@ export default function GatedAuthScreen() {
                             type="password"
                             required
                             minLength={6}
-                            placeholder={isRegister ? "Min 6 characters" : "••••••••"}
+                            placeholder={isRegister ? "Min 6 characters" : role === 'ADMIN' ? "Enter admin passcode" : "Enter your password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base"
+                            className="w-full bg-[#F8FAFC] dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 pl-11 text-slate-900 dark:text-white font-extrabold focus:outline-none focus:border-[#0284C7] focus:bg-white dark:focus:bg-slate-800 transition-all text-sm sm:text-base placeholder-slate-400 dark:placeholder-slate-500"
                           />
                           <Lock className="w-5 h-5 text-slate-400 absolute left-3.5 top-4" />
                         </div>
