@@ -804,25 +804,11 @@ export default function GatedAuthScreen() {
                           </p>
                         </div>
 
-                        {resetLinkUrl && (
-                          <div className="pt-3 border-t border-emerald-200 dark:border-emerald-800/80 space-y-2">
-                            <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-                              Did not receive the email in your inbox? Use the instant recovery button:
-                            </p>
-                            <a
-                              href={resetLinkUrl}
-                              className="inline-flex items-center justify-center gap-2 w-full py-3.5 px-4 rounded-xl font-black text-xs sm:text-sm text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md hover:shadow-lg transition-all active:scale-95 cursor-pointer"
-                            >
-                              <span>Open Password Reset Page Directly →</span>
-                            </a>
-                          </div>
-                        )}
-
-                        <div className="pt-1">
+                        <div className="pt-2">
                           <button
                             type="button"
                             onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); setResetLinkUrl(''); }}
-                            className="text-xs font-black text-slate-600 dark:text-slate-400 hover:text-[#0284C7] dark:hover:text-sky-400 transition-colors cursor-pointer"
+                            className="px-6 py-2.5 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-sm transition-all cursor-pointer"
                           >
                             ← Return to Sign In
                           </button>

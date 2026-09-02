@@ -189,26 +189,11 @@ export default function AuthModal({ isOpen, onClose }) {
                   </p>
                 </div>
 
-                {resetLinkUrl && (
-                  <div className="pt-2 border-t border-emerald-200 space-y-2">
-                    <p className="text-[11px] font-semibold text-emerald-800">
-                      Didn't receive the email in your inbox?
-                    </p>
-                    <a
-                      href={resetLinkUrl}
-                      onClick={onClose}
-                      className="inline-flex items-center justify-center gap-1.5 w-full py-2.5 px-3 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-md transition-all active:scale-95 cursor-pointer"
-                    >
-                      <span>Open Reset Page Directly →</span>
-                    </a>
-                  </div>
-                )}
-
-                <div className="pt-1">
+                <div className="pt-2">
                   <button
                     type="button"
                     onClick={() => { setIsForgotPassword(false); setError(''); setSuccessMessage(''); setResetLinkUrl(''); }}
-                    className="text-xs font-black text-slate-600 hover:text-[#0284C7] transition-colors cursor-pointer"
+                    className="px-5 py-2 rounded-xl font-black text-xs text-white bg-[#0284C7] hover:bg-[#0369A1] shadow-sm transition-all cursor-pointer"
                   >
                     ← Return to Sign In
                   </button>
